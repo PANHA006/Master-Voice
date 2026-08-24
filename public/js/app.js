@@ -24,17 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const customApiKeyInput = document.getElementById('customApiKeyInput');
-    const customElevenKeyInput = document.getElementById('customElevenKeyInput');
     const customAzureKeyInput = document.getElementById('customAzureKeyInput');
     const customAzureRegionInput = document.getElementById('customAzureRegionInput');
 
     // Load saved API keys
     const savedGemini = localStorage.getItem('voxsync_api_key') || '';
-    const savedEleven = localStorage.getItem('voxsync_eleven_key') || '';
     const savedAzure = localStorage.getItem('voxsync_azure_key') || '';
     const savedRegion = localStorage.getItem('voxsync_azure_region') || 'eastus';
     if (customApiKeyInput) customApiKeyInput.value = savedGemini;
-    if (customElevenKeyInput) customElevenKeyInput.value = savedEleven;
     if (customAzureKeyInput) customAzureKeyInput.value = savedAzure;
     if (customAzureRegionInput) customAzureRegionInput.value = savedRegion;
 
@@ -104,12 +101,10 @@ document.addEventListener('DOMContentLoaded', () => {
         closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
         saveSettingsBtn.addEventListener('click', () => {
             const geminiKey = customApiKeyInput ? customApiKeyInput.value.trim() : '';
-            const elevenKey = customElevenKeyInput ? customElevenKeyInput.value.trim() : '';
             const azureKey = customAzureKeyInput ? customAzureKeyInput.value.trim() : '';
             const azureRegion = customAzureRegionInput ? customAzureRegionInput.value.trim() : 'eastus';
 
             localStorage.setItem('voxsync_api_key', geminiKey);
-            localStorage.setItem('voxsync_eleven_key', elevenKey);
             localStorage.setItem('voxsync_azure_key', azureKey);
             localStorage.setItem('voxsync_azure_region', azureRegion);
 

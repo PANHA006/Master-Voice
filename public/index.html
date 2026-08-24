@@ -809,6 +809,36 @@
                                 </svg>
                                 <span id="cloneProcessBtnText">⚡ 1. Process to Clone Voice (ដំណើរការចម្លងសំឡេង)</span>
                             </button>
+
+                            <!-- Acoustic Frequency & Pitch Analysis Dashboard Card (Shown after process) -->
+                            <div id="cloneAcousticResultBox"
+                                class="p-3 bg-gradient-to-r from-slate-950 via-cyan-950/20 to-slate-950 rounded-xl border border-cyan-900/50 flex flex-col gap-2 shrink-0 shadow-lg hidden">
+                                <div class="flex items-center justify-between border-b border-cyan-900/40 pb-1.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        <span class="text-xs font-bold text-cyan-300 font-mono">📊 Acoustic Analysis Metrics</span>
+                                    </div>
+                                    <span id="cloneVoiceCategoryBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/60">Voice Profile</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-center pt-0.5">
+                                    <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800/80">
+                                        <span class="block text-[10px] text-slate-400 font-medium">Pitch Frequency</span>
+                                        <span id="cloneDetectedHz" class="text-xs font-mono font-bold text-cyan-300">-- Hz</span>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800/80">
+                                        <span class="block text-[10px] text-slate-400 font-medium">Neural Base</span>
+                                        <span id="cloneBaseVoiceLabel" class="text-xs font-mono font-bold text-indigo-300">Piseth</span>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800/80">
+                                        <span class="block text-[10px] text-slate-400 font-medium">Pitch Offset (Δ)</span>
+                                        <span id="clonePitchOffsetLabel" class="text-xs font-mono font-bold text-emerald-400">+0 Hz</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
+                                    <span>DSP Morphing: <span class="text-emerald-400 font-semibold">Active (EQ + Formant)</span></span>
+                                    <span id="cloneSpectralZcr" class="font-mono text-slate-500">Spectral: Optimal</span>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Divider -->
@@ -1464,12 +1494,6 @@
                 <div>
                     <label class="block text-xs font-medium text-slate-300 mb-1">Gemini API Key (Optional)</label>
                     <input type="password" id="customApiKeyInput" placeholder="Leave empty for local runtime"
-                        class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-mono" />
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">ElevenLabs API Key (Optional for
-                        Instant Voice Clone)</label>
-                    <input type="password" id="customElevenKeyInput" placeholder="Optional ElevenLabs API key"
                         class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-mono" />
                 </div>
                 <div class="grid grid-cols-3 gap-2">

@@ -2,7 +2,7 @@ const CloneService = require('../services/clone.service');
 
 class CloneController {
     /**
-     * Phase 1: Process and clone voice sample temporarily (copy voice)
+     * Phase 1: Process and analyze acoustic frequency profile of voice sample
      * POST /api/clone/process
      */
     static async processVoice(req, res, next) {
@@ -29,7 +29,7 @@ class CloneController {
     }
 
     /**
-     * Phase 2: Test voice synthesis with custom script
+     * Phase 2: Test voice synthesis with custom script & acoustic morphing
      * POST /api/clone/test-synthesize
      */
     static async testSynthesize(req, res, next) {
@@ -43,7 +43,6 @@ class CloneController {
             }
 
             const { text, voiceName, lang } = req.body;
-            const elevenLabsKey = req.body.elevenLabsKey || req.headers['x-elevenlabs-key'];
 
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return res.status(400).json({
@@ -57,7 +56,6 @@ class CloneController {
                 text,
                 voiceName: voiceName || 'Custom Cloned Voice',
                 lang: lang || 'km',
-                elevenLabsKey,
                 saveToRegistry: false // Do not save permanently until user clicks Save
             });
 
@@ -73,7 +71,7 @@ class CloneController {
      */
     static async saveVoice(req, res, next) {
         try {
-            const { voiceName, lang, referenceAudioPath } = req.body;
+            const { voiceName, lang, referenceAudioPath, acousticData } = req.body;
 
             if (!referenceAudioPath) {
                 return res.status(400).json({
@@ -85,7 +83,8 @@ class CloneController {
             const result = CloneService.saveVoiceProfile({
                 voiceName: voiceName || 'My Cloned Voice',
                 lang: lang || 'km',
-                referenceAudioPath
+                referenceAudioPath,
+                acousticData
             });
 
             res.json(result);
@@ -109,7 +108,6 @@ class CloneController {
 
             const referenceAudioPath = req.file ? req.file.path : req.body.referenceAudioPath;
             const { text, voiceName, lang, saveToRegistry } = req.body;
-            const elevenLabsKey = req.body.elevenLabsKey || req.headers['x-elevenlabs-key'];
 
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return res.status(400).json({
@@ -123,7 +121,6 @@ class CloneController {
                 text,
                 voiceName: voiceName || 'Custom Cloned Voice',
                 lang: lang || 'km',
-                elevenLabsKey,
                 saveToRegistry: saveToRegistry === true || saveToRegistry === 'true'
             });
 

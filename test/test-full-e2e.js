@@ -122,7 +122,8 @@ async function runFullComprehensiveTests() {
             referenceAudioPath: sampleAudio,
             voiceName: 'Master Speaker Gold',
             text: 'សំឡេងក្លូនរបស់ខ្ញុំដំណើរការបានយ៉ាងល្អ',
-            lang: 'km'
+            lang: 'km',
+            saveToRegistry: true
         });
         const voices = VoiceManager.getAllVoices();
         const hasClonedInList = (voices.km || []).some(v => v.name.includes('Master Speaker Gold'));

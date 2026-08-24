@@ -82,6 +82,12 @@ const CloneVoice = (() => {
             saveBtnText: document.getElementById('cloneSaveBtnText'),
             resetBtn: document.getElementById('cloneResetBtn'),
             statusBadge: document.getElementById('cloneStatusBadge'),
+            acousticResultBox: document.getElementById('cloneAcousticResultBox'),
+            detectedHz: document.getElementById('cloneDetectedHz'),
+            voiceCategoryBadge: document.getElementById('cloneVoiceCategoryBadge'),
+            baseVoiceLabel: document.getElementById('cloneBaseVoiceLabel'),
+            pitchOffsetLabel: document.getElementById('clonePitchOffsetLabel'),
+            spectralZcr: document.getElementById('cloneSpectralZcr'),
             audioElement: document.getElementById('cloneAudioElement'),
             playPauseBtn: document.getElementById('clonePlayPauseBtn'),
             playIcon: document.getElementById('clonePlayIcon'),
@@ -110,6 +116,7 @@ const CloneVoice = (() => {
 
     let processedReferenceAudioPath = null;
     let isVoiceProcessed = false;
+    let lastAcousticData = null;
 
     function setupEventListeners() {
         elements.dropZone.addEventListener('click', () => elements.fileInput.click());
@@ -403,7 +410,7 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         }
     }
 
-    // Phase 1: Process & Clone Voice
+    // Phase 1: Process & Analyze Voice Acoustics
     async function processCloneVoice() {
         if (!referenceAudioBlob) {
             showToast('Please upload or record a reference voice sample first.', 'error');
@@ -414,7 +421,7 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         const lang = elements.langSelect.value;
 
         elements.processBtn.disabled = true;
-        elements.processBtnText.textContent = 'Processing & copying voice...';
+        elements.processBtnText.textContent = 'Analyzing frequency & matching acoustics...';
 
         try {
             const formData = new FormData();
@@ -427,28 +434,40 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 body: formData
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success) {
-                    processedReferenceAudioPath = data.referenceAudioPath;
-                }
-            } else if (res.status === 404) {
-                // Graceful fallback if backend endpoint was called before server restarted
-                console.warn('/api/clone/process returned 404, using local session');
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to process voice sample');
             }
 
+            processedReferenceAudioPath = data.referenceAudioPath;
             isVoiceProcessed = true;
+            lastAcousticData = data.acoustic || null;
 
-            elements.processBadge.textContent = '✅ Cloned (Ready to Test)';
+            // Render Acoustic Frequency Dashboard
+            if (data.acoustic && elements.acousticResultBox) {
+                if (elements.detectedHz) elements.detectedHz.textContent = `${data.acoustic.detectedHz} Hz`;
+                if (elements.voiceCategoryBadge) elements.voiceCategoryBadge.textContent = data.acoustic.voiceCategory;
+                if (elements.baseVoiceLabel) {
+                    const cleanBase = (data.acoustic.baseNeuralVoice || '').replace('km-KH-', '').replace('en-US-', '').replace('Neural', '');
+                    elements.baseVoiceLabel.textContent = cleanBase;
+                }
+                if (elements.pitchOffsetLabel) elements.pitchOffsetLabel.textContent = data.acoustic.pitchOffsetStr;
+                if (elements.spectralZcr && data.acoustic.spectral) {
+                    elements.spectralZcr.textContent = `Air: +${data.acoustic.spectral.airDb}dB | Body: +${data.acoustic.spectral.bodyDb}dB`;
+                }
+                elements.acousticResultBox.classList.remove('hidden');
+            }
+
+            elements.processBadge.textContent = '✅ Analyzed & Ready';
             elements.processBadge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
-            elements.processBtnText.textContent = '✅ Voice Processed & Cloned';
+            elements.processBtnText.textContent = `✅ Analyzed (${data.acoustic ? data.acoustic.detectedHz : ''} Hz)`;
             elements.processBtn.className = 'w-full py-2.5 px-4 rounded-xl font-bold text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center gap-2 cursor-default';
 
             // Unlock Phase 2 (Test Synthesize button)
             elements.synthesizeBtn.disabled = false;
             elements.synthesizeBtn.className = 'py-2 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md';
 
-            showToast(`Voice "${voiceName}" processed successfully! You can now test it in Step 2.`, 'success');
+            showToast(`Voice "${voiceName}" analyzed successfully (${data.acoustic?.detectedHz || ''} Hz)! You can now test it in Step 2.`, 'success');
 
         } catch (err) {
             console.error('Process error:', err);
@@ -590,7 +609,8 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 body: JSON.stringify({
                     voiceName,
                     lang,
-                    referenceAudioPath: refPath
+                    referenceAudioPath: refPath,
+                    acousticData: lastAcousticData
                 })
             });
 
@@ -622,6 +642,7 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         referenceAudioBlob = null;
         processedReferenceAudioPath = null;
         isVoiceProcessed = false;
+        lastAcousticData = null;
         currentAudioDataUri = null;
         rawLinesData = [];
         cloneParsedLines = [];
@@ -635,6 +656,12 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         if (elements.refCurrentTime) elements.refCurrentTime.textContent = '00:00';
         if (elements.refTotalDuration) elements.refTotalDuration.textContent = '00:00';
         updateRefPlayState(false);
+
+        if (elements.acousticResultBox) {
+            elements.acousticResultBox.classList.add('hidden');
+        }
+        if (elements.detectedHz) elements.detectedHz.textContent = '-- Hz';
+        if (elements.pitchOffsetLabel) elements.pitchOffsetLabel.textContent = '+0 Hz';
 
         elements.processBtn.disabled = true;
         elements.processBtn.className = 'w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-400 bg-slate-800 border border-slate-700/50 cursor-not-allowed transition-all flex items-center justify-center gap-2';
