@@ -7,19 +7,46 @@ const { ensureDir } = require('../utils/audio.util');
 const VoiceManager = require('../utils/voice-manager.util');
 
 const KHMER_VOICE_PROFILES = {
-    // 👨 Piseth Series (សំឡេងបុរស)
-    'km-KH-PisethNeural': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '+0Hz' },
-    'km-piseth-edu': { baseVoice: 'km-KH-PisethNeural', rateOffset: -22, pitch: '-5Hz' },       // Teaching / Calm & deliberate pace
-    'km-piseth-doc': { baseVoice: 'km-KH-PisethNeural', rateOffset: -18, pitch: '-25Hz' },     // Deep cinema baritone / Documentary
-    'km-piseth-story': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '-12Hz' },   // Warm podcast & storytelling
-    'km-piseth-promo': { baseVoice: 'km-KH-PisethNeural', rateOffset: -8, pitch: '+25Hz' },     // High-energy upbeat commercial
+    // 📚 វីដេអូអប់រំ & ចំណេះដឹង (Education & Explainer Series)
+    'km-edu-professor': { baseVoice: 'km-KH-PisethNeural', rateOffset: -20, pitch: '-3Hz' },       // សាស្ត្រាចារ្យ & បាឋកថា (Academic Professor & Lecture)
+    'km-edu-explainer': { baseVoice: 'km-KH-PisethNeural', rateOffset: -16, pitch: '+0Hz' },       // ពន្យល់ចំណេះដឹង & បច្ចេកវិទ្យា (Tech & Knowledge Explainer)
+    'km-edu-history': { baseVoice: 'km-KH-PisethNeural', rateOffset: -22, pitch: '-15Hz' },        // ប្រវត្តិសាស្ត្រ & អក្សរសាស្ត្រ (History & Culture Narrator)
+    'km-edu-motivation': { baseVoice: 'km-KH-PisethNeural', rateOffset: -14, pitch: '+5Hz' },       // ការលើកទឹកចិត្ត & អភិវឌ្ឍខ្លួន (Motivation & Self-Growth)
+    'km-edu-instructor': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -20, pitch: '-4Hz' },     // គ្រូបង្រៀនស្ត្រី E-learning (Female Course Instructor)
+    'km-edu-kids-teacher': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -12, pitch: '+26Hz' },   // អ្នកគ្រូបង្រៀនកុមារ / មត្តេយ្យ (Kindergarten & Primary Teacher)
+    'km-edu-documentary-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -18, pitch: '-10Hz' }, // ធម្មជាតិ វិទ្យាសាស្ត្រ & ភូមិសាស្ត្រ (Nature & Geo Explainer)
+    'km-edu-mindfulness': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -24, pitch: '-16Hz' },   // សតិអារម្មណ៍ & សុខភាពផ្លូវចិត្ត (Mindfulness & Mental Health)
 
-    // 👩 Sreymom Series (សំឡេងស្ត្រី)
+    // 🎬 សម្រាយរឿង (Recap & Storytelling Series)
+    'km-recap-cinema': { baseVoice: 'km-KH-PisethNeural', rateOffset: -12, pitch: '-18Hz' },       // Movie Recap Pro (ភាពយន្ត)
+    'km-recap-drama': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -10, pitch: '-8Hz' },        // Drama & Series Recap (រឿងភាគ)
+    'km-recap-suspense': { baseVoice: 'km-KH-PisethNeural', rateOffset: -18, pitch: '-32Hz' },     // Suspense / Horror Recap (ភ័យរន្ធត់ & អាថ៌កំបាំង)
+
+    // 🎭 សម្លេងតួអង្គ (Character & Roleplay Series)
+    'km-char-elder-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -26, pitch: '-42Hz' },       // តួអង្គតាចាស់ / លោកតា (Elderly Grandfather)
+    'km-char-elder-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -24, pitch: '-30Hz' },      // តួអង្គយាយចាស់ / លោកយាយ (Elderly Grandmother)
+    'km-char-villain': { baseVoice: 'km-KH-PisethNeural', rateOffset: -20, pitch: '-50Hz' },       // តួអង្គកាច / មេចោរ / បិសាច (Villain & Monster)
+    'km-char-hero': { baseVoice: 'km-KH-PisethNeural', rateOffset: -10, pitch: '-6Hz' },           // តួអង្គវីរបុរស / តួឯកប្រុស (Brave Hero / Anime)
+    'km-char-heroine': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+32Hz' },        // តួអង្គនារីក្លាហាន / តួឯកស្រី (Sweet Heroine / Princess)
+
+    // 👶 សម្លេងក្មេង (Kids & Animation Series)
+    'km-child-boy': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +6, pitch: '+68Hz' },          // សម្លេងកុមារា / ក្មេងប្រុស (Little Boy)
+    'km-child-girl': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +8, pitch: '+92Hz' },         // សម្លេងកុមារី / ក្មេងស្រី (Little Girl)
+    'km-child-cartoon': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +12, pitch: '+120Hz' },     // សម្លេងកូនក្មេងតូច / គំនូរជីវចល (Cute Baby & Cartoon)
+
+    // 👨 Piseth Series (សំឡេងបុរសទូទៅ)
+    'km-KH-PisethNeural': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '+0Hz' },
+    'km-piseth-edu': { baseVoice: 'km-KH-PisethNeural', rateOffset: -22, pitch: '-5Hz' },          // Teaching / Calm & deliberate pace
+    'km-piseth-doc': { baseVoice: 'km-KH-PisethNeural', rateOffset: -18, pitch: '-25Hz' },        // Deep cinema baritone / Documentary
+    'km-piseth-story': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '-12Hz' },      // Warm podcast & storytelling
+    'km-piseth-promo': { baseVoice: 'km-KH-PisethNeural', rateOffset: -8, pitch: '+25Hz' },        // High-energy upbeat commercial
+
+    // 👩 Sreymom Series (សំឡេងស្ត្រីទូទៅ)
     'km-KH-SreymomNeural': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -15, pitch: '+0Hz' },
-    'km-sreymom-edu': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -22, pitch: '-8Hz' },      // Clear articulate teaching
-    'km-sreymom-story': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -18, pitch: '-20Hz' },   // Soothing soft bedtime / audiobook
-    'km-sreymom-news': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -14, pitch: '+10Hz' },    // Professional crisp broadcast
-    'km-sreymom-fun': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+35Hz' }       // Cheerful bright entertainment
+    'km-sreymom-edu': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -22, pitch: '-8Hz' },         // Clear articulate teaching
+    'km-sreymom-story': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -18, pitch: '-20Hz' },      // Soothing soft bedtime / audiobook
+    'km-sreymom-news': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -14, pitch: '+10Hz' },       // Professional crisp broadcast
+    'km-sreymom-fun': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+35Hz' }          // Cheerful bright entertainment
 };
 
 function runEdgeTTS({ text, voice, rateStr, pitchStr = '+0Hz', outputPath, vttPath }) {
@@ -32,11 +59,20 @@ function runEdgeTTS({ text, voice, rateStr, pitchStr = '+0Hz', outputPath, vttPa
             '--write-media', outputPath,
             '--write-subtitles', vttPath
         ];
+
         execFile('edge-tts', args, { windowsHide: true }, (err, stdout, stderr) => {
-            if (err) {
-                return reject(new Error(stderr || err.message));
+            if (!err) {
+                return resolve();
             }
-            resolve();
+
+            // Fallback: Run via python -m edge_tts
+            const pythonArgs = ['-m', 'edge_tts', ...args];
+            execFile('python', pythonArgs, { windowsHide: true }, (pyErr, pyStdout, pyStderr) => {
+                if (pyErr) {
+                    return reject(new Error(pyStderr || stderr || pyErr.message));
+                }
+                resolve();
+            });
         });
     });
 }
@@ -142,10 +178,31 @@ class TTSService {
             selectedVoice = (targetLang === 'km') ? 'km-KH-PisethNeural' : 'en-US-JennyNeural';
         }
 
+        // Handle Cloned Voice selection seamlessly
+        if (selectedVoice && selectedVoice.startsWith('cloned-')) {
+            const CloneService = require('./clone.service');
+            const clonedVoice = VoiceManager.getClonedVoices().find(v => v.id === selectedVoice);
+            if (clonedVoice && clonedVoice.referenceAudioPath && fs.existsSync(clonedVoice.referenceAudioPath)) {
+                return await CloneService.cloneAndSynthesize({
+                    referenceAudioPath: clonedVoice.referenceAudioPath,
+                    text,
+                    voiceName: clonedVoice.name,
+                    lang: targetLang,
+                    existingVoiceId: clonedVoice.id
+                });
+            } else {
+                console.warn(`Reference sample missing for cloned voice "${selectedVoice}". Falling back to default voice.`);
+                selectedVoice = (targetLang === 'km') ? 'km-KH-PisethNeural' : 'en-US-JennyNeural';
+            }
+        }
+
         // Resolve specialized voice profile (Education, Documentary, Storyteller, Entertainment)
         const profile = KHMER_VOICE_PROFILES[selectedVoice];
-        const baseVoice = profile ? profile.baseVoice : selectedVoice;
-        const rateOffset = profile ? profile.rateOffset : (selectedVoice.includes('Neural') && selectedVoice.startsWith('km-') ? -15 : 0);
+        let baseVoice = profile ? profile.baseVoice : selectedVoice;
+        if (!baseVoice || !baseVoice.includes('Neural')) {
+            baseVoice = (targetLang === 'km') ? 'km-KH-PisethNeural' : 'en-US-JennyNeural';
+        }
+        const rateOffset = profile ? profile.rateOffset : (baseVoice.includes('Neural') && baseVoice.startsWith('km-') ? -15 : 0);
         const pitchStr = profile ? profile.pitch : '+0Hz';
 
         const ratePercent = Math.round((speedRate - 1.0) * 100) + rateOffset;

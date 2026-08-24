@@ -68,14 +68,41 @@ class VoiceManager {
         
         const standardVoices = {
             km: [
-                // 👨 Piseth Series (សំឡេងបុរស)
+                // 📚 វីដេអូអប់រំ & ចំណេះដឹង (Education & Knowledge Series)
+                { id: 'km-edu-professor', name: '👨‍🏫 សាស្ត្រាចារ្យ & បាឋកថា (Academic Professor - Piseth)', gender: 'Male', lang: 'km', category: 'Education' },
+                { id: 'km-edu-explainer', name: '💡 ពន្យល់ចំណេះដឹង & បច្ចេកវិទ្យា (Tech & Knowledge Explainer - Piseth)', gender: 'Male', lang: 'km', category: 'Education' },
+                { id: 'km-edu-history', name: '📜 ប្រវត្តិសាស្ត្រ & អក្សរសាស្ត្រ (History & Culture - Piseth)', gender: 'Male', lang: 'km', category: 'Education' },
+                { id: 'km-edu-motivation', name: '🌟 ការលើកទឹកចិត្ត & អភិវឌ្ឍខ្លួន (Motivation & Self-Growth - Piseth)', gender: 'Male', lang: 'km', category: 'Education' },
+                { id: 'km-edu-instructor', name: '👩‍🏫 គ្រូបង្រៀនស្ត្រី E-learning (Female Course Instructor - Sreymom)', gender: 'Female', lang: 'km', category: 'Education' },
+                { id: 'km-edu-kids-teacher', name: '🎨 អ្នកគ្រូបង្រៀនកុមារ / មត្តេយ្យ (Kindergarten & Primary Teacher - Sreymom)', gender: 'Female', lang: 'km', category: 'Education' },
+                { id: 'km-edu-documentary-f', name: '🌍 ធម្មជាតិ វិទ្យាសាស្ត្រ & ភូមិសាស្ត្រ (Nature & Geo Explainer - Sreymom)', gender: 'Female', lang: 'km', category: 'Education' },
+                { id: 'km-edu-mindfulness', name: '🧘‍♀️ សតិអារម្មណ៍ & សុខភាពផ្លូវចិត្ត (Mindfulness & Mental Health - Sreymom)', gender: 'Female', lang: 'km', category: 'Education' },
+
+                // 🎬 សម្រាយរឿង (Recap & Storytelling Series)
+                { id: 'km-recap-cinema', name: '🎬 សម្រាយរឿង - បែបភាពយន្ត (Movie Recap Pro - Piseth)', gender: 'Male', lang: 'km', category: 'Recap' },
+                { id: 'km-recap-drama', name: '🍿 សម្រាយរឿង - បែប Drama & រឿងភាគ (Drama Recap - Sreymom)', gender: 'Female', lang: 'km', category: 'Recap' },
+                { id: 'km-recap-suspense', name: '🔥 សម្រាយរឿង - បែបភ័យរន្ធត់ & អាថ៌កំបាំង (Suspense & Thriller - Piseth)', gender: 'Male', lang: 'km', category: 'Recap' },
+
+                // 🎭 សម្លេងតួអង្គ (Character & Roleplay Series)
+                { id: 'km-char-elder-m', name: '👴 តួអង្គតាចាស់ / លោកតា (Grandfather)', gender: 'Male', lang: 'km', category: 'Character' },
+                { id: 'km-char-elder-f', name: '👵 តួអង្គយាយចាស់ / លោកយាយ (Grandmother)', gender: 'Female', lang: 'km', category: 'Character' },
+                { id: 'km-char-villain', name: '😈 តួអង្គកាច / មេចោរ / បិសាច (Villain & Monster)', gender: 'Male', lang: 'km', category: 'Character' },
+                { id: 'km-char-hero', name: '🦸 តួអង្គវីរបុរស / តួឯកប្រុស (Brave Hero / Anime Male)', gender: 'Male', lang: 'km', category: 'Character' },
+                { id: 'km-char-heroine', name: '🧚‍♀️ តួអង្គនារីក្លាហាន / ទេពអប្សរ (Sweet Heroine / Princess)', gender: 'Female', lang: 'km', category: 'Character' },
+
+                // 👶 សម្លេងក្មេង (Kids & Animation Series)
+                { id: 'km-child-boy', name: '👦 សម្លេងកុមារា (Little Boy Voice)', gender: 'Child', lang: 'km', category: 'Kids' },
+                { id: 'km-child-girl', name: '👧 សម្លេងកុមារី (Little Girl Voice)', gender: 'Child', lang: 'km', category: 'Kids' },
+                { id: 'km-child-cartoon', name: '🐣 សម្លេងកូនក្មេងគំនូរជីវចល (Cute Baby & Cartoon)', gender: 'Child', lang: 'km', category: 'Kids' },
+
+                // 👨 Piseth Series (សំឡេងបុរសទូទៅ)
                 { id: 'km-KH-PisethNeural', name: '🇰🇭 Piseth (ពិសិដ្ឋ - Standard Male Neural)', gender: 'Male', lang: 'km', category: 'General' },
                 { id: 'km-piseth-edu', name: '👨‍🏫 Piseth (ពិសិដ្ឋ - Education & Teacher)', gender: 'Male', lang: 'km', category: 'Education' },
-                { id: 'km-piseth-doc', name: '🎬 Piseth (ពិសិដ្ឋ - Documentary & Film Narrator)', gender: 'Male', lang: 'km', category: 'Documentary' },
+                { id: 'km-piseth-doc', name: '🎥 Piseth (ពិសិដ្ឋ - Documentary & Film Narrator)', gender: 'Male', lang: 'km', category: 'Documentary' },
                 { id: 'km-piseth-story', name: '🎙️ Piseth (ពិសិដ្ឋ - Podcast & Storyteller)', gender: 'Male', lang: 'km', category: 'Storytelling' },
                 { id: 'km-piseth-promo', name: '⚡ Piseth (ពិសិដ្ឋ - Commercial & Promo)', gender: 'Male', lang: 'km', category: 'Entertainment' },
 
-                // 👩 Sreymom Series (សំឡេងស្ត្រី)
+                // 👩 Sreymom Series (សំឡេងស្ត្រីទូទៅ)
                 { id: 'km-KH-SreymomNeural', name: '🇰🇭 Sreymom (ស្រីមុំ - Standard Female Neural)', gender: 'Female', lang: 'km', category: 'General' },
                 { id: 'km-sreymom-edu', name: '👩‍🏫 Sreymom (ស្រីមុំ - Education & Explainer)', gender: 'Female', lang: 'km', category: 'Education' },
                 { id: 'km-sreymom-story', name: '📖 Sreymom (ស្រីមុំ - Storyteller & Audio Book)', gender: 'Female', lang: 'km', category: 'Storytelling' },

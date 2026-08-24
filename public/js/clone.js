@@ -63,13 +63,24 @@ const CloneVoice = (() => {
             micTimer: document.getElementById('cloneMicTimer'),
             audioPreviewBox: document.getElementById('cloneAudioPreviewBox'),
             audioPreviewElement: document.getElementById('cloneAudioPreviewElement'),
+            previewAudioName: document.getElementById('clonePreviewAudioName'),
+            refPlayPauseBtn: document.getElementById('cloneRefPlayPauseBtn'),
+            refPlayIcon: document.getElementById('cloneRefPlayIcon'),
+            refSeeker: document.getElementById('cloneRefSeeker'),
+            refCurrentTime: document.getElementById('cloneRefCurrentTime'),
+            refTotalDuration: document.getElementById('cloneRefTotalDuration'),
             voiceNameInput: document.getElementById('cloneVoiceNameInput'),
             langSelect: document.getElementById('cloneLangSelect'),
+            processBtn: document.getElementById('cloneProcessBtn'),
+            processBtnText: document.getElementById('cloneProcessBtnText'),
+            processBadge: document.getElementById('cloneProcessBadge'),
             scriptInput: document.getElementById('cloneScriptInput'),
-            charCount: document.getElementById('cloneCharCount'),
             loadSampleBtn: document.getElementById('cloneLoadSampleBtn'),
             synthesizeBtn: document.getElementById('cloneSynthesizeBtn'),
             btnText: document.getElementById('cloneBtnText'),
+            saveModelBtn: document.getElementById('cloneSaveModelBtn'),
+            saveBtnText: document.getElementById('cloneSaveBtnText'),
+            resetBtn: document.getElementById('cloneResetBtn'),
             statusBadge: document.getElementById('cloneStatusBadge'),
             audioElement: document.getElementById('cloneAudioElement'),
             playPauseBtn: document.getElementById('clonePlayPauseBtn'),
@@ -84,6 +95,7 @@ const CloneVoice = (() => {
             timestampBox: document.getElementById('cloneTimestampBox'),
             copyAllBtn: document.getElementById('cloneCopyAllBtn'),
             downloadTxtBtn: document.getElementById('cloneDownloadTxtBtn'),
+            autoBreakBtn: document.getElementById('cloneAutoBreakBtn'),
             manageVoicesBtn: document.getElementById('manageClonedVoicesBtn'),
             clonedVoicesModal: document.getElementById('clonedVoicesModal'),
             closeClonedVoicesBtn: document.getElementById('closeClonedVoicesBtn'),
@@ -96,21 +108,24 @@ const CloneVoice = (() => {
         setupVoiceManagerModal();
     }
 
+    let processedReferenceAudioPath = null;
+    let isVoiceProcessed = false;
+
     function setupEventListeners() {
         elements.dropZone.addEventListener('click', () => elements.fileInput.click());
 
         elements.dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            elements.dropZone.classList.add('border-indigo-500', 'bg-indigo-950/20');
+            elements.dropZone.classList.add('border-cyan-500', 'bg-cyan-950/20');
         });
 
         elements.dropZone.addEventListener('dragleave', () => {
-            elements.dropZone.classList.remove('border-indigo-500', 'bg-indigo-950/20');
+            elements.dropZone.classList.remove('border-cyan-500', 'bg-cyan-950/20');
         });
 
         elements.dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            elements.dropZone.classList.remove('border-indigo-500', 'bg-indigo-950/20');
+            elements.dropZone.classList.remove('border-cyan-500', 'bg-cyan-950/20');
             if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                 handleSelectedReferenceFile(e.dataTransfer.files[0]);
             }
@@ -130,24 +145,35 @@ const CloneVoice = (() => {
             }
         });
 
-        elements.scriptInput.addEventListener('input', () => {
-            const len = elements.scriptInput.value.length;
-            elements.charCount.textContent = `${len} characters`;
-        });
+        // Auto-break lines on Khmer punctuation '។' and '៕'
+        setupKhmerAutoBreak(elements.scriptInput);
 
-        elements.loadSampleBtn.addEventListener('click', () => {
-            const lang = elements.langSelect.value;
-            if (lang === 'km') {
-                elements.scriptInput.value = `សូមស្វាគមន៍មកកាន់ VoxSync AI មុខងារចម្លងសំឡេង (Voice Cloning)។
+        if (elements.autoBreakBtn) {
+            elements.autoBreakBtn.addEventListener('click', () => {
+                const text = elements.scriptInput.value;
+                if (!text || !text.trim()) {
+                    showToast('Please enter or paste text first', 'warning');
+                    return;
+                }
+                elements.scriptInput.value = formatKhmerPunctuationBreak(text);
+                showToast('បានបំបែកបន្ទាត់តាមសញ្ញា (។) រួចរាល់!', 'success');
+            });
+        }
+
+        if (elements.loadSampleBtn) {
+            elements.loadSampleBtn.addEventListener('click', () => {
+                const lang = elements.langSelect.value;
+                if (lang === 'km') {
+                    elements.scriptInput.value = `សូមស្វាគមន៍មកកាន់ VoxSync AI មុខងារចម្លងសំឡេង (Voice Cloning)។
 សំឡេងនេះត្រូវបានបង្កើតឡើងដោយផ្អែកលើសំឡេងគំរូរបស់អ្នក។
 អ្នកអាចប្រើប្រាស់វាសម្រាប់បង្កើត Subtitle និងវីដេអូបានយ៉ាងរលូន។`;
-            } else {
-                elements.scriptInput.value = `Hello and welcome! This speech was synthesized using your custom cloned voice profile.
+                } else {
+                    elements.scriptInput.value = `Hello and welcome! This speech was synthesized using your custom cloned voice profile.
 Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
-            }
-            elements.charCount.textContent = `${elements.scriptInput.value.length} characters`;
-            showToast(`Loaded ${lang.toUpperCase()} sample script`, 'info');
-        });
+                }
+                showToast(`Loaded ${lang.toUpperCase()} sample script`, 'info');
+            });
+        }
 
         if (elements.cloneSpeedRange) {
             elements.cloneSpeedRange.addEventListener('input', (e) => {
@@ -158,7 +184,47 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
             });
         }
 
-        elements.synthesizeBtn.addEventListener('click', cloneAndSynthesize);
+        // Phase 1: Process Clone Button
+        if (elements.processBtn) {
+            elements.processBtn.addEventListener('click', processCloneVoice);
+        }
+
+        // Phase 2: Test Synthesize Button
+        if (elements.synthesizeBtn) {
+            elements.synthesizeBtn.addEventListener('click', testSynthesizeVoice);
+        }
+
+        // Phase 3: Save Model Button
+        if (elements.saveModelBtn) {
+            elements.saveModelBtn.addEventListener('click', saveVoiceModel);
+        }
+
+        // Reset Button
+        if (elements.resetBtn) {
+            elements.resetBtn.addEventListener('click', resetCloneForm);
+        }
+
+        // Custom Reference Audio Preview Controls
+        if (elements.refPlayPauseBtn && elements.audioPreviewElement) {
+            elements.refPlayPauseBtn.addEventListener('click', toggleRefPlayback);
+            elements.audioPreviewElement.addEventListener('timeupdate', onRefTimeUpdate);
+            elements.audioPreviewElement.addEventListener('loadedmetadata', () => {
+                const total = elements.audioPreviewElement.duration || 0;
+                if (elements.refTotalDuration) elements.refTotalDuration.textContent = formatTime(total);
+            });
+            elements.audioPreviewElement.addEventListener('ended', () => {
+                updateRefPlayState(false);
+            });
+        }
+
+        if (elements.refSeeker && elements.audioPreviewElement) {
+            elements.refSeeker.addEventListener('input', (e) => {
+                const pct = e.target.value / 100;
+                if (elements.audioPreviewElement.duration) {
+                    elements.audioPreviewElement.currentTime = pct * elements.audioPreviewElement.duration;
+                }
+            });
+        }
 
         elements.playPauseBtn.addEventListener('click', togglePlayback);
         elements.audioElement.addEventListener('timeupdate', onTimeUpdate);
@@ -212,6 +278,34 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         });
     }
 
+    function toggleRefPlayback() {
+        if (!elements.audioPreviewElement) return;
+        if (elements.audioPreviewElement.paused) {
+            elements.audioPreviewElement.play();
+            updateRefPlayState(true);
+        } else {
+            elements.audioPreviewElement.pause();
+            updateRefPlayState(false);
+        }
+    }
+
+    function updateRefPlayState(isPlaying) {
+        if (!elements.refPlayIcon) return;
+        if (isPlaying) {
+            elements.refPlayIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+        } else {
+            elements.refPlayIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>`;
+        }
+    }
+
+    function onRefTimeUpdate() {
+        if (!elements.audioPreviewElement) return;
+        const cur = elements.audioPreviewElement.currentTime;
+        const dur = elements.audioPreviewElement.duration || 1;
+        if (elements.refCurrentTime) elements.refCurrentTime.textContent = formatTime(cur);
+        if (elements.refSeeker) elements.refSeeker.value = (cur / dur) * 100;
+    }
+
     function handleSelectedReferenceFile(file) {
         if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|m4a|webm|ogg)$/i)) {
             showToast('Please select a valid audio file (.mp3, .wav, .m4a, .webm)', 'error');
@@ -223,11 +317,18 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         elements.fileName.textContent = `Reference: ${file.name} (${sizeMb} MB)`;
         elements.fileName.classList.remove('hidden');
 
+        if (elements.previewAudioName) {
+            elements.previewAudioName.textContent = file.name;
+        }
+
         const audioUrl = URL.createObjectURL(file);
         elements.audioPreviewElement.src = audioUrl;
         elements.audioPreviewBox.classList.remove('hidden');
+        updateRefPlayState(false);
 
-        showToast('Reference voice sample loaded!', 'success');
+        // Enable Phase 1 Process button
+        enableProcessButton();
+        showToast('Reference voice sample loaded! Click "1. Process to Clone Voice" below.', 'info');
     }
 
     async function startRecording() {
@@ -245,9 +346,16 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 const audioUrl = URL.createObjectURL(referenceAudioBlob);
                 elements.audioPreviewElement.src = audioUrl;
                 elements.audioPreviewBox.classList.remove('hidden');
+                updateRefPlayState(false);
 
-                elements.fileName.textContent = `Recorded Sample (${formatTime(micSeconds)})`;
+                const recLabel = `Recorded Sample (${formatTime(micSeconds)})`;
+                elements.fileName.textContent = recLabel;
                 elements.fileName.classList.remove('hidden');
+                if (elements.previewAudioName) {
+                    elements.previewAudioName.textContent = recLabel;
+                }
+
+                enableProcessButton();
             };
 
             mediaRecorder.start();
@@ -285,41 +393,120 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
         }
     }
 
-    async function cloneAndSynthesize() {
+    function enableProcessButton() {
+        if (!elements.processBtn) return;
+        elements.processBtn.disabled = false;
+        elements.processBtn.className = 'w-full py-2.5 px-4 rounded-xl font-bold text-xs text-white gradient-bg-btn shadow-md hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer';
+        if (elements.processBadge) {
+            elements.processBadge.textContent = 'Sample ready';
+            elements.processBadge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/50';
+        }
+    }
+
+    // Phase 1: Process & Clone Voice
+    async function processCloneVoice() {
         if (!referenceAudioBlob) {
             showToast('Please upload or record a reference voice sample first.', 'error');
             return;
         }
 
-        const text = elements.scriptInput.value.trim();
-        if (!text) {
-            showToast('Please enter script text to synthesize.', 'error');
-            return;
-        }
-
-        const voiceName = elements.voiceNameInput.value.trim() || 'Custom Cloned Voice';
+        const voiceName = elements.voiceNameInput.value.trim() || 'My Cloned Voice';
         const lang = elements.langSelect.value;
 
-        elements.synthesizeBtn.disabled = true;
-        elements.btnText.textContent = 'Cloning voice & synthesizing...';
-        elements.statusBadge.textContent = 'Processing...';
-        elements.statusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-300 animate-pulse';
+        elements.processBtn.disabled = true;
+        elements.processBtnText.textContent = 'Processing & copying voice...';
 
         try {
             const formData = new FormData();
             formData.append('referenceAudio', referenceAudioBlob, 'voice-sample.webm');
-            formData.append('text', text);
             formData.append('voiceName', voiceName);
             formData.append('lang', lang);
 
-            const res = await fetch('/api/clone/synthesize', {
+            const res = await fetch('/api/clone/process', {
                 method: 'POST',
                 body: formData
             });
 
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    processedReferenceAudioPath = data.referenceAudioPath;
+                }
+            } else if (res.status === 404) {
+                // Graceful fallback if backend endpoint was called before server restarted
+                console.warn('/api/clone/process returned 404, using local session');
+            }
+
+            isVoiceProcessed = true;
+
+            elements.processBadge.textContent = '✅ Cloned (Ready to Test)';
+            elements.processBadge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
+            elements.processBtnText.textContent = '✅ Voice Processed & Cloned';
+            elements.processBtn.className = 'w-full py-2.5 px-4 rounded-xl font-bold text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center gap-2 cursor-default';
+
+            // Unlock Phase 2 (Test Synthesize button)
+            elements.synthesizeBtn.disabled = false;
+            elements.synthesizeBtn.className = 'py-2 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md';
+
+            showToast(`Voice "${voiceName}" processed successfully! You can now test it in Step 2.`, 'success');
+
+        } catch (err) {
+            console.error('Process error:', err);
+            showToast(err.message, 'error');
+            elements.processBtn.disabled = false;
+            elements.processBtnText.textContent = '⚡ 1. Process to Clone Voice (ដំណើរការចម្លងសំឡេង)';
+        }
+    }
+
+    // Phase 2: Test Voice Synthesis
+    async function testSynthesizeVoice() {
+        if (!referenceAudioBlob && !processedReferenceAudioPath) {
+            showToast('Please complete Step 1 (Process Voice) first.', 'error');
+            return;
+        }
+
+        const text = elements.scriptInput.value.trim();
+        if (!text) {
+            showToast('Please enter script text in Step 2 to test synthesis.', 'error');
+            return;
+        }
+
+        const voiceName = elements.voiceNameInput.value.trim() || 'My Cloned Voice';
+        const lang = elements.langSelect.value;
+
+        elements.synthesizeBtn.disabled = true;
+        elements.btnText.textContent = 'Testing synthesis...';
+        elements.statusBadge.textContent = 'Testing...';
+        elements.statusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-300 animate-pulse';
+
+        try {
+            const formData = new FormData();
+            if (referenceAudioBlob) {
+                formData.append('referenceAudio', referenceAudioBlob, 'voice-sample.webm');
+            }
+            if (processedReferenceAudioPath) {
+                formData.append('referenceAudioPath', processedReferenceAudioPath);
+            }
+            formData.append('text', text);
+            formData.append('voiceName', voiceName);
+            formData.append('lang', lang);
+
+            // Attempt test-synthesize first; if 404, fallback to /api/clone/synthesize
+            let res = await fetch('/api/clone/test-synthesize', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.status === 404) {
+                res = await fetch('/api/clone/synthesize', {
+                    method: 'POST',
+                    body: formData
+                });
+            }
+
             const data = await res.json();
             if (!res.ok || !data.success) {
-                throw new Error(data.error || 'Voice cloning failed');
+                throw new Error(data.error || 'Test synthesis failed');
             }
 
             currentAudioDataUri = data.audioDataUri || data.audioUrl;
@@ -342,26 +529,135 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 elements.playPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-500', 'text-white', 'shadow-lg');
 
                 renderWaveform();
-                showToast(`Voice "${voiceName}" cloned and added to Voice Model list!`, 'success');
+                showToast('Test speech generated! If satisfied, click "3. Save to Voice Models" below.', 'success');
 
-                elements.statusBadge.textContent = 'Ready';
+                elements.statusBadge.textContent = 'Test Ready';
                 elements.statusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
 
-                // Automatically refresh TTS Voice Dropdown so the newly cloned voice appears in Tab 1
-                if (typeof window.reloadTTSVoices === 'function') {
-                    window.reloadTTSVoices();
+                // Unlock Phase 3 (Save Model Button)
+                if (elements.saveModelBtn) {
+                    elements.saveModelBtn.disabled = false;
+                    elements.saveModelBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-500 transition-all flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer shadow-lg shadow-emerald-500/20';
+                    elements.saveBtnText.textContent = '💾 3. Save to Voice Models';
                 }
             };
 
         } catch (err) {
-            console.error('Cloning error:', err);
+            console.error('Test synthesis error:', err);
             showToast(err.message, 'error');
             elements.statusBadge.textContent = 'Error';
             elements.statusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-400';
         } finally {
             elements.synthesizeBtn.disabled = false;
-            elements.btnText.textContent = 'Clone Voice & Synthesize Speech';
+            elements.btnText.textContent = '▶️ 2. Test Voice Synthesis';
         }
+    }
+
+    // Phase 3: Save to Voice Models Registry
+    async function saveVoiceModel() {
+        if (!processedReferenceAudioPath && !referenceAudioBlob) {
+            showToast('No voice sample to save. Please complete Step 1 first.', 'error');
+            return;
+        }
+
+        const voiceName = elements.voiceNameInput.value.trim() || 'My Cloned Voice';
+        const lang = elements.langSelect.value;
+
+        elements.saveModelBtn.disabled = true;
+        elements.saveBtnText.textContent = 'Saving to Voice Models...';
+
+        try {
+            let refPath = processedReferenceAudioPath;
+
+            // If not yet uploaded persistently, process it first
+            if (!refPath && referenceAudioBlob) {
+                const formData = new FormData();
+                formData.append('referenceAudio', referenceAudioBlob, 'voice-sample.webm');
+                formData.append('voiceName', voiceName);
+                formData.append('lang', lang);
+
+                const procRes = await fetch('/api/clone/process', { method: 'POST', body: formData });
+                const procData = await procRes.json();
+                if (procRes.ok && procData.success) {
+                    refPath = procData.referenceAudioPath;
+                    processedReferenceAudioPath = refPath;
+                }
+            }
+
+            const res = await fetch('/api/clone/save-voice', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    voiceName,
+                    lang,
+                    referenceAudioPath: refPath
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Failed to save voice model');
+            }
+
+            elements.saveBtnText.textContent = '✅ Saved to Voice Models';
+            elements.saveModelBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap cursor-default';
+
+            showToast(`Voice Model "${voiceName}" saved successfully! You can now select it in Text-to-Speech (TTS).`, 'success');
+
+            // Refresh TTS Voice Dropdown in Tab 1
+            if (typeof window.reloadTTSVoices === 'function') {
+                window.reloadTTSVoices();
+            }
+
+        } catch (err) {
+            console.error('Save error:', err);
+            showToast(err.message, 'error');
+            elements.saveModelBtn.disabled = false;
+            elements.saveBtnText.textContent = '💾 3. Save to Voice Models';
+        }
+    }
+
+    // Reset Form
+    function resetCloneForm() {
+        referenceAudioBlob = null;
+        processedReferenceAudioPath = null;
+        isVoiceProcessed = false;
+        currentAudioDataUri = null;
+        rawLinesData = [];
+        cloneParsedLines = [];
+
+        elements.fileInput.value = '';
+        elements.fileName.classList.add('hidden');
+        elements.audioPreviewBox.classList.add('hidden');
+        elements.audioPreviewElement.src = '';
+        if (elements.previewAudioName) elements.previewAudioName.textContent = '';
+        if (elements.refSeeker) elements.refSeeker.value = 0;
+        if (elements.refCurrentTime) elements.refCurrentTime.textContent = '00:00';
+        if (elements.refTotalDuration) elements.refTotalDuration.textContent = '00:00';
+        updateRefPlayState(false);
+
+        elements.processBtn.disabled = true;
+        elements.processBtn.className = 'w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-400 bg-slate-800 border border-slate-700/50 cursor-not-allowed transition-all flex items-center justify-center gap-2';
+        elements.processBtnText.textContent = '⚡ 1. Process to Clone Voice (ដំណើរការចម្លងសំឡេង)';
+        elements.processBadge.textContent = 'Waiting for sample';
+        elements.processBadge.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-400';
+
+        elements.scriptInput.value = '';
+        elements.synthesizeBtn.disabled = true;
+        elements.synthesizeBtn.className = 'py-2 px-4 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 transition-all flex items-center justify-center gap-1.5 cursor-not-allowed opacity-50 shadow-md';
+
+        elements.saveModelBtn.disabled = true;
+        elements.saveModelBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-xs text-slate-400 bg-slate-800 border border-slate-700/50 cursor-not-allowed transition-all flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap';
+        elements.saveBtnText.textContent = '💾 3. Save to Voice Models';
+
+        elements.audioElement.src = '';
+        elements.playPauseBtn.disabled = true;
+        elements.playPauseBtn.className = 'p-3 rounded-xl bg-slate-800 text-slate-500 cursor-not-allowed hover:text-white transition-all flex items-center gap-2';
+        elements.statusBadge.textContent = 'Idle';
+        elements.statusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
+
+        elements.timestampBox.innerHTML = `<p class="text-slate-500 italic text-center pt-20 font-sans">No speech synthesized yet. Click "2. Test Voice Synthesis" to generate synced timestamps.</p>`;
+        showToast('Voice cloning form reset', 'info');
     }
 
     function togglePlayback() {

@@ -2,19 +2,113 @@ const CloneService = require('../services/clone.service');
 
 class CloneController {
     /**
-     * Synthesize speech using reference voice sample
+     * Phase 1: Process and clone voice sample temporarily (copy voice)
+     * POST /api/clone/process
+     */
+    static async processVoice(req, res, next) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Please upload or record a reference audio sample to clone.'
+                });
+            }
+
+            const { voiceName, lang } = req.body;
+
+            const result = await CloneService.processVoiceSample({
+                referenceAudioPath: req.file.path,
+                voiceName: voiceName || 'My Cloned Voice',
+                lang: lang || 'km'
+            });
+
+            res.json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Phase 2: Test voice synthesis with custom script
+     * POST /api/clone/test-synthesize
+     */
+    static async testSynthesize(req, res, next) {
+        try {
+            const referenceAudioPath = req.file ? req.file.path : req.body.referenceAudioPath;
+            if (!referenceAudioPath) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Reference voice sample is required for test synthesis.'
+                });
+            }
+
+            const { text, voiceName, lang } = req.body;
+            const elevenLabsKey = req.body.elevenLabsKey || req.headers['x-elevenlabs-key'];
+
+            if (!text || typeof text !== 'string' || text.trim().length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Script text is required to test synthesis.'
+                });
+            }
+
+            const result = await CloneService.cloneAndSynthesize({
+                referenceAudioPath,
+                text,
+                voiceName: voiceName || 'Custom Cloned Voice',
+                lang: lang || 'km',
+                elevenLabsKey,
+                saveToRegistry: false // Do not save permanently until user clicks Save
+            });
+
+            res.json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Phase 3: Save tested voice to persistent Voice Models registry
+     * POST /api/clone/save-voice
+     */
+    static async saveVoice(req, res, next) {
+        try {
+            const { voiceName, lang, referenceAudioPath } = req.body;
+
+            if (!referenceAudioPath) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Reference audio sample path is required.'
+                });
+            }
+
+            const result = CloneService.saveVoiceProfile({
+                voiceName: voiceName || 'My Cloned Voice',
+                lang: lang || 'km',
+                referenceAudioPath
+            });
+
+            res.json(result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Backward-compatible direct synthesize
      * POST /api/clone/synthesize
      */
     static async synthesize(req, res, next) {
         try {
-            if (!req.file) {
+            if (!req.file && !req.body.referenceAudioPath) {
                 return res.status(400).json({
                     success: false,
                     error: 'Please upload a reference audio sample to clone.'
                 });
             }
 
-            const { text, voiceName, lang } = req.body;
+            const referenceAudioPath = req.file ? req.file.path : req.body.referenceAudioPath;
+            const { text, voiceName, lang, saveToRegistry } = req.body;
             const elevenLabsKey = req.body.elevenLabsKey || req.headers['x-elevenlabs-key'];
 
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
@@ -25,11 +119,12 @@ class CloneController {
             }
 
             const result = await CloneService.cloneAndSynthesize({
-                referenceAudioPath: req.file.path,
+                referenceAudioPath,
                 text,
                 voiceName: voiceName || 'Custom Cloned Voice',
-                lang: lang || 'en',
-                elevenLabsKey
+                lang: lang || 'km',
+                elevenLabsKey,
+                saveToRegistry: saveToRegistry === true || saveToRegistry === 'true'
             });
 
             res.json(result);

@@ -30,6 +30,12 @@ const STT = (() => {
             btnText: document.getElementById('sttBtnText'),
             audioPreviewBox: document.getElementById('sttAudioPreviewBox'),
             audioElement: document.getElementById('sttAudioElement'),
+            previewAudioName: document.getElementById('sttPreviewAudioName'),
+            playPauseBtn: document.getElementById('sttPlayPauseBtn'),
+            playIcon: document.getElementById('sttPlayIcon'),
+            seeker: document.getElementById('sttSeeker'),
+            currentTime: document.getElementById('sttCurrentTime'),
+            totalDuration: document.getElementById('sttTotalDuration'),
             resultBox: document.getElementById('sttResultBox'),
             resultBadge: document.getElementById('sttResultBadge'),
             lineCount: document.getElementById('sttLineCount'),
@@ -76,6 +82,19 @@ const STT = (() => {
             }
         });
 
+        // Audio Player Events
+        if (elements.playPauseBtn) {
+            elements.playPauseBtn.addEventListener('click', toggleAudioPlay);
+        }
+        if (elements.audioElement) {
+            elements.audioElement.addEventListener('timeupdate', onAudioTimeUpdate);
+            elements.audioElement.addEventListener('loadedmetadata', onAudioLoadedMetadata);
+            elements.audioElement.addEventListener('ended', onAudioEnded);
+        }
+        if (elements.seeker) {
+            elements.seeker.addEventListener('input', onAudioSeek);
+        }
+
         // Transcribe Action
         elements.transcribeBtn.addEventListener('click', transcribeAudio);
 
@@ -93,6 +112,52 @@ const STT = (() => {
         });
     }
 
+    function toggleAudioPlay() {
+        if (!elements.audioElement || !elements.audioElement.src) return;
+        if (elements.audioElement.paused) {
+            elements.audioElement.play();
+            updatePlayState(true);
+        } else {
+            elements.audioElement.pause();
+            updatePlayState(false);
+        }
+    }
+
+    function updatePlayState(isPlaying) {
+        if (!elements.playIcon) return;
+        if (isPlaying) {
+            elements.playIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+        } else {
+            elements.playIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+        }
+    }
+
+    function onAudioTimeUpdate() {
+        if (!elements.audioElement) return;
+        const cur = elements.audioElement.currentTime;
+        const dur = elements.audioElement.duration || 1;
+        if (elements.currentTime) elements.currentTime.textContent = formatTime(cur);
+        if (elements.seeker) elements.seeker.value = (cur / dur) * 100;
+    }
+
+    function onAudioLoadedMetadata() {
+        if (!elements.audioElement) return;
+        const dur = elements.audioElement.duration || 0;
+        if (elements.totalDuration) elements.totalDuration.textContent = formatTime(dur);
+        if (elements.seeker) elements.seeker.value = 0;
+    }
+
+    function onAudioEnded() {
+        updatePlayState(false);
+        if (elements.seeker) elements.seeker.value = 0;
+    }
+
+    function onAudioSeek(e) {
+        if (!elements.audioElement || !elements.audioElement.duration) return;
+        const pct = parseFloat(e.target.value) / 100;
+        elements.audioElement.currentTime = pct * elements.audioElement.duration;
+    }
+
     function handleSelectedFile(file) {
         if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|m4a|webm|ogg)$/i)) {
             showToast('Please select a valid audio file (.mp3, .wav, .m4a, .webm)', 'error');
@@ -107,7 +172,16 @@ const STT = (() => {
         // Audio preview
         const audioUrl = URL.createObjectURL(file);
         elements.audioElement.src = audioUrl;
-        elements.audioPreviewBox.classList.remove('hidden');
+        if (elements.previewAudioName) {
+            elements.previewAudioName.textContent = file.name;
+        }
+
+        // Enable Play Button
+        if (elements.playPauseBtn) {
+            elements.playPauseBtn.disabled = false;
+            elements.playPauseBtn.className = 'w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md transition-all shrink-0 cursor-pointer';
+        }
+        updatePlayState(false);
 
         enableTranscribeButton();
         showToast('Audio file loaded and ready for transcription', 'info');
@@ -133,10 +207,21 @@ const STT = (() => {
                 sttAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const audioUrl = URL.createObjectURL(sttAudioBlob);
                 elements.audioElement.src = audioUrl;
-                elements.audioPreviewBox.classList.remove('hidden');
 
-                elements.fileName.textContent = `Recorded Audio (${formatTime(micSeconds)})`;
+                const recordedLabel = `Recorded Audio (${formatTime(micSeconds)})`;
+                elements.fileName.textContent = recordedLabel;
                 elements.fileName.classList.remove('hidden');
+
+                if (elements.previewAudioName) {
+                    elements.previewAudioName.textContent = recordedLabel;
+                }
+
+                if (elements.playPauseBtn) {
+                    elements.playPauseBtn.disabled = false;
+                    elements.playPauseBtn.className = 'w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md transition-all shrink-0 cursor-pointer';
+                }
+                updatePlayState(false);
+
                 enableTranscribeButton();
             };
 
@@ -285,6 +370,7 @@ const STT = (() => {
                 if (elements.audioElement.duration) {
                     elements.audioElement.currentTime = item.seconds || 0;
                     elements.audioElement.play();
+                    updatePlayState(true);
                 }
             });
 

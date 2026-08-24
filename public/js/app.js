@@ -7,11 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabTtsBtn = document.getElementById('tabTtsBtn');
     const tabSttBtn = document.getElementById('tabSttBtn');
     const tabCloneBtn = document.getElementById('tabCloneBtn');
+    const tabVoiceChangerBtn = document.getElementById('tabVoiceChangerBtn');
     const tabHistoryBtn = document.getElementById('tabHistoryBtn');
 
     const tabTts = document.getElementById('tabTts');
     const tabStt = document.getElementById('tabStt');
     const tabClone = document.getElementById('tabClone');
+    const tabVoiceChanger = document.getElementById('tabVoiceChanger');
     const tabHistory = document.getElementById('tabHistory');
 
     const moduleTitle = document.getElementById('moduleTitle');
@@ -56,6 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
             badge: 'Voice Clone'
         },
         {
+            btn: tabVoiceChangerBtn,
+            section: tabVoiceChanger,
+            title: 'Speech-to-Speech Voice Changer (រក្សាចង្វាក់ & អារម្មណ៍និយាយដើម)',
+            badge: 'Voice Changer'
+        },
+        {
             btn: tabHistoryBtn,
             section: tabHistory,
             title: 'Audio File History & Storage Manager',
@@ -87,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabTtsBtn && tabTts) tabTtsBtn.addEventListener('click', () => switchTab(tabTtsBtn, tabTts));
     if (tabSttBtn && tabStt) tabSttBtn.addEventListener('click', () => switchTab(tabSttBtn, tabStt));
     if (tabCloneBtn && tabClone) tabCloneBtn.addEventListener('click', () => switchTab(tabCloneBtn, tabClone));
+    if (tabVoiceChangerBtn && tabVoiceChanger) tabVoiceChangerBtn.addEventListener('click', () => switchTab(tabVoiceChangerBtn, tabVoiceChanger));
     if (tabHistoryBtn && tabHistory) tabHistoryBtn.addEventListener('click', () => switchTab(tabHistoryBtn, tabHistory));
 
     // Settings Modal

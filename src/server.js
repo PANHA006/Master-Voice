@@ -18,7 +18,15 @@ const server = app.listen(config.port, () => {
     StorageCleanupService.startScheduler();
 });
 
-// Handle graceful shutdown
+// Handle graceful shutdown & prevent unhandled crashes
+process.on('uncaughtException', (err) => {
+    console.error('[Global UncaughtException]:', err.stack || err.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('[Global UnhandledRejection]:', reason);
+});
+
 process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     server.close(() => {

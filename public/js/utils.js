@@ -111,3 +111,131 @@ function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
+
+/**
+ * Auto-format Khmer text to break into new lines on Khmer punctuation signs '។' and '៕'
+ * Preserves '។ល។' (etc.) without breaking inside it.
+ * @param {string} text
+ * @returns {string}
+ */
+function formatKhmerPunctuationBreak(text) {
+    if (!text || typeof text !== 'string') return text;
+
+    const tokenEtc = '___KH_ETC_TOKEN___';
+    let processed = text.replace(/។ល។/g, tokenEtc);
+
+    // Break lines after '។' or '៕' if followed by space(s) or non-newline characters
+    processed = processed.replace(/([។៕])[ \t]*(?!\r?\n|$)/g, '$1\n');
+
+    // Clean up any extra trailing whitespace before newlines
+    processed = processed.replace(/([។៕])[ \t]+(?=\r?\n)/g, '$1');
+
+    // Handle '។ល។' followed by space/text
+    processed = processed.replace(new RegExp(`${tokenEtc}[ \\t]*(?!\\r?\\n|$)`, 'g'), '។ល។\n');
+    processed = processed.replace(new RegExp(tokenEtc, 'g'), '។ល។');
+
+    return processed;
+}
+
+/**
+ * Attach auto-break behavior to a textarea for Khmer punctuation '។' and '៕'
+ * Handles:
+ * 1. Pasting text with '។'
+ * 2. Typing '។' directly
+ * 3. IME composition completion
+ * @param {HTMLTextAreaElement} textarea
+ * @param {Function} onUpdateCallback
+ */
+function setupKhmerAutoBreak(textarea, onUpdateCallback) {
+    if (!textarea) return;
+
+    // 1. Intercept Paste
+    textarea.addEventListener('paste', (e) => {
+        const pasteText = (e.clipboardData || window.clipboardData)?.getData('text');
+        if (pasteText && (pasteText.includes('។') || pasteText.includes('៕'))) {
+            e.preventDefault();
+            const formatted = formatKhmerPunctuationBreak(pasteText);
+            
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            
+            let inserted = false;
+            try {
+                inserted = document.execCommand('insertText', false, formatted);
+            } catch (err) {
+                inserted = false;
+            }
+            
+            if (!inserted) {
+                const val = textarea.value;
+                textarea.value = val.substring(0, start) + formatted + val.substring(end);
+                textarea.selectionStart = start + formatted.length;
+                textarea.selectionEnd = start + formatted.length;
+            }
+            
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            if (typeof onUpdateCallback === 'function') onUpdateCallback();
+        }
+    });
+
+    // 2. Intercept Direct Typing
+    textarea.addEventListener('input', (e) => {
+        if (e.isComposing) return;
+
+        if (e.inputType === 'insertText' && (e.data === '។' || e.data === '៕')) {
+            const start = textarea.selectionStart;
+            const textVal = textarea.value;
+
+            const charBefore = textVal.slice(start - 1, start);
+            const charAfter = textVal.slice(start, start + 1);
+
+            // If it's not the middle of "។ល", and next char isn't already a newline
+            const twoBefore = textVal.slice(Math.max(0, start - 2), start);
+            if (twoBefore !== '។' && (charBefore === '។' || charBefore === '៕') && charAfter !== '\n' && charAfter !== '\r') {
+                let inserted = false;
+                try {
+                    inserted = document.execCommand('insertText', false, '\n');
+                } catch (err) {
+                    inserted = false;
+                }
+
+                if (!inserted) {
+                    textarea.value = textVal.substring(0, start) + '\n' + textVal.substring(start);
+                    textarea.selectionStart = start + 1;
+                    textarea.selectionEnd = start + 1;
+                }
+
+                if (typeof onUpdateCallback === 'function') onUpdateCallback();
+            }
+        }
+    });
+
+    // 3. Handle IME composition completion (Khmer keyboards)
+    textarea.addEventListener('compositionend', (e) => {
+        if (e.data && (e.data.endsWith('។') || e.data.endsWith('៕'))) {
+            const start = textarea.selectionStart;
+            const textVal = textarea.value;
+            const charBefore = textVal.slice(start - 1, start);
+            const charAfter = textVal.slice(start, start + 1);
+
+            if ((charBefore === '។' || charBefore === '៕') && charAfter !== '\n' && charAfter !== '\r') {
+                let inserted = false;
+                try {
+                    inserted = document.execCommand('insertText', false, '\n');
+                } catch (err) {
+                    inserted = false;
+                }
+
+                if (!inserted) {
+                    textarea.value = textVal.substring(0, start) + '\n' + textVal.substring(start);
+                    textarea.selectionStart = start + 1;
+                    textarea.selectionEnd = start + 1;
+                }
+
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                if (typeof onUpdateCallback === 'function') onUpdateCallback();
+            }
+        }
+    });
+}
+

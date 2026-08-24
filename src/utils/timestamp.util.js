@@ -13,15 +13,24 @@ function formatTime(seconds, withBrackets = false) {
 }
 
 /**
- * Split text into meaningful lines/sentences and remove existing leading brackets
+ * Split text into meaningful lines/sentences and remove existing leading brackets.
+ * Automatically splits lines at Khmer punctuation '។' and '៕'.
  * @param {string} rawText
  * @returns {string[]}
  */
 function splitScriptLines(rawText) {
     if (!rawText || typeof rawText !== 'string') return [];
     
-    // Split by newlines first
-    const rawLines = rawText.split('\n')
+    // Auto break on Khmer punctuation marks '។' and '៕'
+    const tokenEtc = '___KH_ETC_TOKEN___';
+    let processed = rawText.replace(/។ល។/g, tokenEtc);
+    processed = processed.replace(/([។៕])[ \t]*(?!\r?\n|$)/g, '$1\n');
+    processed = processed.replace(/([។៕])[ \t]+(?=\r?\n)/g, '$1');
+    processed = processed.replace(new RegExp(`${tokenEtc}[ \\t]*(?!\\r?\\n|$)`, 'g'), '។ល។\n');
+    processed = processed.replace(new RegExp(tokenEtc, 'g'), '។ល។');
+
+    // Split by newlines
+    const rawLines = processed.split(/\r?\n/)
         .map(line => line.trim())
         .filter(line => line.length > 0);
 

@@ -3,11 +3,13 @@ const router = express.Router();
 const ttsRoutes = require('./tts.routes');
 const sttRoutes = require('./stt.routes');
 const cloneRoutes = require('./clone.routes');
+const voiceChangerRoutes = require('./voice-changer.routes');
 const historyRoutes = require('./history.routes');
 
 router.use('/tts', ttsRoutes);
 router.use('/stt', sttRoutes);
 router.use('/clone', cloneRoutes);
+router.use('/voice-changer', voiceChangerRoutes);
 router.use('/history', historyRoutes);
 
 // Health check endpoint

@@ -44,7 +44,8 @@ When the sun set, the world went dark.`,
             downloadAudioBtn: document.getElementById('ttsDownloadAudioBtn'),
             timestampBox: document.getElementById('ttsTimestampBox'),
             copyAllBtn: document.getElementById('ttsCopyAllBtn'),
-            downloadTxtBtn: document.getElementById('ttsDownloadTxtBtn')
+            downloadTxtBtn: document.getElementById('ttsDownloadTxtBtn'),
+            autoBreakBtn: document.getElementById('ttsAutoBreakBtn')
         };
 
         await loadVoices();
@@ -115,15 +116,56 @@ When the sun set, the world went dark.`,
             return;
         }
 
+        const categoryNames = {
+            'Cloned': '✨ សំឡេងផ្ទាល់ខ្លួន (Cloned Voices)',
+            'Recap': '🎬 សម្រាយរឿង (Movie & Story Recap)',
+            'Character': '🎭 សម្លេងតួអង្គ (Character & Roleplay)',
+            'Kids': '👶 សម្លេងក្មេង (Kids & Animation)',
+            'General': '🇰🇭 សំឡេងទូទៅ (General Neural Voices)',
+            'Education': '📚 វីដេអូអប់រំ & មេរៀន (Education & E-learning)',
+            'Documentary': '🎥 ភាពយន្តឯកសារ (Documentary)',
+            'Storytelling': '🎙️ និទានរឿង & Podcast (Storytelling)',
+            'News': '📺 ព័ត៌មាន (News & Formal)',
+            'Entertainment': '⚡ កម្សាន្ត & ពាណិជ្ជកម្ម (Entertainment)'
+        };
+
+        const groups = {};
         available.forEach((v) => {
-            const option = document.createElement('option');
-            option.value = v.id;
-            option.textContent = v.name;
-            if (v.isCloned) {
-                option.classList.add('font-semibold', 'text-cyan-400');
-            }
-            elements.voiceSelect.appendChild(option);
+            const cat = v.isCloned ? 'Cloned' : (v.category || 'General');
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(v);
         });
+
+        // If Khmer has distinct categories, render optgroups
+        if (lang === 'km') {
+            Object.keys(groups).forEach((cat) => {
+                const optGroup = document.createElement('optgroup');
+                optGroup.label = categoryNames[cat] || cat;
+
+                groups[cat].forEach((v) => {
+                    const option = document.createElement('option');
+                    option.value = v.id;
+                    option.textContent = v.name;
+                    if (v.isCloned) {
+                        option.classList.add('font-semibold', 'text-cyan-400');
+                    }
+                    optGroup.appendChild(option);
+                });
+
+                elements.voiceSelect.appendChild(optGroup);
+            });
+        } else {
+            // English or other languages
+            available.forEach((v) => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = v.name;
+                if (v.isCloned) {
+                    option.classList.add('font-semibold', 'text-cyan-400');
+                }
+                elements.voiceSelect.appendChild(option);
+            });
+        }
     }
 
     function setupEventListeners() {
@@ -143,6 +185,22 @@ When the sun set, the world went dark.`,
             elements.charCount.textContent = `${len} characters`;
         }
         elements.scriptInput.addEventListener('input', updateCharCount);
+
+        // Auto-break lines on Khmer punctuation '។' and '៕'
+        setupKhmerAutoBreak(elements.scriptInput, updateCharCount);
+
+        if (elements.autoBreakBtn) {
+            elements.autoBreakBtn.addEventListener('click', () => {
+                const text = elements.scriptInput.value;
+                if (!text || !text.trim()) {
+                    showToast('Please enter or paste text first', 'warning');
+                    return;
+                }
+                elements.scriptInput.value = formatKhmerPunctuationBreak(text);
+                updateCharCount();
+                showToast('បានបំបែកបន្ទាត់តាមសញ្ញា (។) រួចរាល់!', 'success');
+            });
+        }
 
         elements.speedRange.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
