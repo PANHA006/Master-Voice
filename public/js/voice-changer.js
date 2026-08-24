@@ -65,6 +65,83 @@ const VoiceChanger = (() => {
 
         setupEventListeners();
         setupAudioPlayers();
+        loadVoiceModels();
+
+        // Make voice changer models reloadable
+        window.reloadVoiceChangerVoices = loadVoiceModels;
+    }
+
+    async function loadVoiceModels() {
+        try {
+            const res = await fetch('/api/tts/voices');
+            const data = await res.json();
+            if (data.success && data.voices) {
+                renderVoiceDropdown(data.voices);
+            }
+        } catch (err) {
+            console.error('Failed to load voice models for voice changer:', err);
+        }
+    }
+
+    function renderVoiceDropdown(voicesData) {
+        if (!elements.presetSelect) return;
+        elements.presetSelect.innerHTML = '';
+
+        const categoryNames = {
+            'Cloned': '✨ សំឡេងផ្ទាល់ខ្លួន (Cloned Voices)',
+            'Recap': '🎬 សម្រាយរឿង (Movie & Story Recap)',
+            'Education': '📚 វីដេអូអប់រំ & មេរៀន (Education & E-learning)',
+            'Character': '🎭 សម្លេងតួអង្គ (Character & Roleplay)',
+            'Kids': '👶 សម្លេងក្មេង (Kids & Animation)',
+            'General': '🇰🇭 សំឡេងទូទៅ (General Khmer Neural)',
+            'Storytelling': '🎙️ និទានរឿង & Podcast (Storytelling)',
+            'Documentary': '🎥 ភាពយន្តឯកសារ (Documentary)',
+            'News': '📺 ព័ត៌មាន (News & Formal)',
+            'Entertainment': '⚡ កម្សាន្ត & ពាណិជ្ជកម្ម (Entertainment)'
+        };
+
+        const kmVoices = voicesData.km || [];
+        const enVoices = voicesData.en || [];
+
+        // Khmer Groups
+        const groups = {};
+        kmVoices.forEach((v) => {
+            const cat = v.isCloned ? 'Cloned' : (v.category || 'General');
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(v);
+        });
+
+        Object.keys(groups).forEach((cat) => {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = categoryNames[cat] || cat;
+
+            groups[cat].forEach((v) => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = v.name;
+                if (v.id === 'km-recap-cinema') {
+                    option.selected = true;
+                }
+                optGroup.appendChild(option);
+            });
+
+            elements.presetSelect.appendChild(optGroup);
+        });
+
+        // English Group
+        if (enVoices.length > 0) {
+            const enOptGroup = document.createElement('optgroup');
+            enOptGroup.label = '🇺🇸 សំឡេងអង់គ្លេស (English Neural Voices)';
+
+            enVoices.forEach((v) => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = v.name;
+                enOptGroup.appendChild(option);
+            });
+
+            elements.presetSelect.appendChild(enOptGroup);
+        }
     }
 
     function formatTime(seconds) {
@@ -392,6 +469,7 @@ const VoiceChanger = (() => {
 
         const formData = new FormData();
         formData.append('audio', originalAudioBlob, 'input-audio.webm');
+        formData.append('voice', preset);
         formData.append('preset', preset);
         formData.append('removeNoise', removeNoise);
         if (pitchShift !== 0) {

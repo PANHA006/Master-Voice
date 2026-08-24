@@ -2,15 +2,15 @@ const VoiceChangerService = require('../services/voice-changer.service');
 
 class VoiceChangerController {
     /**
-     * Get all available voice changer presets
-     * GET /api/voice-changer/presets
+     * Get all available voice models
+     * GET /api/voice-changer/presets or GET /api/voice-changer/voices
      */
     static getPresets(req, res) {
         try {
-            const presets = VoiceChangerService.getPresets();
+            const voices = VoiceChangerService.getVoiceModels();
             res.json({
                 success: true,
-                presets
+                voices
             });
         } catch (error) {
             res.status(500).json({
@@ -21,7 +21,7 @@ class VoiceChangerController {
     }
 
     /**
-     * Transform voice recording preserving original cadence & rhythm
+     * Transform voice recording using selected Voice Model
      * POST /api/voice-changer/transform
      */
     static async transform(req, res, next) {
@@ -34,15 +34,15 @@ class VoiceChangerController {
             }
 
             const inputPath = req.file.path;
-            const preset = req.body.preset || 'female-to-male';
-            const pitchShift = req.body.pitchShift !== undefined ? Number(req.body.pitchShift) : undefined;
+            const voice = req.body.voice || req.body.preset || 'km-recap-cinema';
+            const pitchShift = req.body.pitchShift !== undefined && req.body.pitchShift !== '' ? Number(req.body.pitchShift) : undefined;
             const speed = req.body.speed ? Number(req.body.speed) : 1.0;
             const removeNoise = req.body.removeNoise || 'medium';
             const customApiKey = req.body.customApiKey || req.headers['x-gemini-api-key'];
 
             const result = await VoiceChangerService.transformAudio({
                 inputPath,
-                preset,
+                voice,
                 pitchShift,
                 speed,
                 removeNoise,

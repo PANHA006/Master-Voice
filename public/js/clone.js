@@ -628,6 +628,9 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
             if (typeof window.reloadTTSVoices === 'function') {
                 window.reloadTTSVoices();
             }
+            if (typeof window.reloadVoiceChangerVoices === 'function') {
+                window.reloadVoiceChangerVoices();
+            }
 
         } catch (err) {
             console.error('Save error:', err);
@@ -882,6 +885,9 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 if (typeof window.reloadTTSVoices === 'function') {
                     window.reloadTTSVoices();
                 }
+                if (typeof window.reloadVoiceChangerVoices === 'function') {
+                    window.reloadVoiceChangerVoices();
+                }
             } else {
                 alert(`Error: ${data.message}`);
             }
@@ -907,6 +913,9 @@ Enjoy crystal-clear speech with synchronized, interactive timestamps.`;
                 fetchAndRenderClonedVoices();
                 if (typeof window.reloadTTSVoices === 'function') {
                     window.reloadTTSVoices();
+                }
+                if (typeof window.reloadVoiceChangerVoices === 'function') {
+                    window.reloadVoiceChangerVoices();
                 }
             } else {
                 alert(`Error: ${data.message}`);
