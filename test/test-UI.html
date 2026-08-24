@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VoxSync AI - Voice & Speech Synchronizer</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter & Noto Serif Khmer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Khmer:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind Custom Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Khmer', 'sans-serif'],
+                        khmer: ['Noto Sans Khmer', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f6ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            cyan: '#06b6d4',
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'wave-bar': 'waveBar 1.2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 15px rgba(6, 182, 212, 0.4)' },
+                            '50%': { opacity: 0.6, boxShadow: '0 0 30px rgba(99, 102, 241, 0.8)' },
+                        },
+                        waveBar: {
+                            '0%': { transform: 'scaleY(0.2)' },
+                            '100%': { transform: 'scaleY(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles for Glassmorphism and Audio Visualizer -->
+    <style>
+        body {
+            background-color: #030712;
+            color: #f3f4f6;
+            font-family: 'Inter', 'Noto Sans Khmer', sans-serif;
+        }
+
+        /* Glassmorphic card design */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-hover:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.6);
+        }
+
+        /* Timestamp active highlight */
+        .timestamp-line {
+            transition: all 0.2s ease;
+        }
+
+        .timestamp-line.active-line {
+            background-color: rgba(99, 102, 241, 0.15);
+            border-left: 3px solid #06b6d4;
+            padding-left: 0.75rem;
+        }
+
+        /* Glowing gradients */
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gradient-bg-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #0891b2 100%);
+        }
+
+        .gradient-bg-btn:hover {
+            background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+        }
+
+        /* Audio range slider custom style */
+        input[type=range] {
+            accent-color: #06b6d4;
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen flex flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-black text-slate-100 overflow-x-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-50 glass-card border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <!-- App Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl gradient-bg-btn flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-xl tracking-tight text-white">VoxSync <span
+                                class="gradient-text">AI</span></h1>
+                        <span
+                            class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">v2.5
+                            Flash</span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Intelligent Dual Speech Synthesizer & Transcriber
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls & Status -->
+            <div class="flex items-center gap-3">
+                <!-- Live AI Status Badge -->
+                <div
+                    class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-slate-300 font-medium">Gemini AI Ready</span>
+                </div>
+
+                <!-- API Settings Modal Trigger -->
+                <button id="settingsBtn"
+                    class="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 text-slate-300 hover:text-white transition-all border border-slate-700/50"
+                    title="API Key Settings">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+
+        <!-- Tab Navigation Bar -->
+        <div class="flex justify-center">
+            <div
+                class="p-1.5 glass-card rounded-2xl flex items-center gap-2 border border-slate-800 max-w-md w-full shadow-xl">
+                <button id="tabTtsBtn"
+                    class="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/25">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                    Text to Speech
+                </button>
+                <button id="tabSttBtn"
+                    class="flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                    Voice to Text
+                </button>
+            </div>
+        </div>
+
+        <!-- Notification Toast Box Container -->
+        <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- ================= TAB 1: TEXT TO SPEECH (TTS) ================= -->
+        <section id="tabTts" class="grid grid-cols-1 lg:grid-cols-12 gap-6 transition-all duration-300">
+
+            <!-- TTS Input Left Column (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col gap-5">
+
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+                            <h2 class="font-semibold text-lg text-white">Script & Voice Configuration</h2>
+                        </div>
+                        <!-- Quick Preset Toggle -->
+                        <button id="loadSampleScriptBtn"
+                            class="text-xs px-3 py-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-800/50 transition-all flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Load Sample Script
+                        </button>
+                    </div>
+
+                    <!-- Selectors Grid (Language & Voice) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Language Selection (Khmer & English only) -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Language Output</label>
+                            <div class="relative">
+                                <select id="ttsLangSelect"
+                                    class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
+                                    <option value="en" selected>🇺🇸 English (United States)</option>
+                                    <option value="km">🇰🇭 ភាសាខ្មែរ (Khmer)</option>
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice Selection (Male/Female) -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Voice Gender & Tone</label>
+                            <div class="relative">
+                                <select id="ttsVoiceSelect"
+                                    class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 appearance-none">
+                                    <option value="Kore" data-gender="Female" selected>Female - Kore (Warm & Natural)
+                                    </option>
+                                    <option value="Puck" data-gender="Male">Male - Puck (Upbeat & Clear)</option>
+                                    <option value="Zephyr" data-gender="Female">Female - Zephyr (Bright & Friendly)
+                                    </option>
+                                    <option value="Fenrir" data-gender="Male">Male - Fenrir (Excitable & Bold)</option>
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Script Input Textarea -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="ttsScriptInput" class="text-xs font-medium text-slate-400">Script
+                                Content</label>
+                            <span id="ttsCharCount" class="text-[11px] text-slate-500">0 characters</span>
+                        </div>
+                        <textarea id="ttsScriptInput" rows="8"
+                            class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-sans leading-relaxed"
+                            placeholder="Type or paste your text here line by line... Each sentence or paragraph will be automatically timestamped upon synthesis."></textarea>
+                    </div>
+
+                    <!-- Speech Customization Options -->
+                    <div
+                        class="p-3 bg-slate-900/40 rounded-xl border border-slate-800/60 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-400 font-medium">Pacing Speed:</span>
+                            <input type="range" id="ttsSpeedRange" min="0.75" max="1.25" step="0.05" value="1.0"
+                                class="w-28 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                            <span id="ttsSpeedVal" class="text-xs font-mono text-cyan-400">1.0x</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Timestamp alignment auto-calculates per line.</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Button: Synthesize Speech -->
+                    <button id="ttsSynthesizeBtn"
+                        class="w-full py-3.5 px-6 rounded-xl font-semibold text-white gradient-bg-btn shadow-lg shadow-indigo-500/20 hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 group">
+                        <svg id="ttsBtnIcon" class="w-5 h-5 text-cyan-300 group-hover:scale-110 transition-transform"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span id="ttsBtnText">Synthesize Speech & Generate Alignment</span>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- TTS Output Right Column (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+
+                <!-- Audio Player Glass Box -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <h3 class="font-semibold text-sm text-slate-200 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                            </svg>
+                            Synthesized Audio
+                        </h3>
+                        <span id="ttsStatusBadge"
+                            class="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">Idle</span>
+                    </div>
+
+                    <!-- HTML5 Hidden Audio Element -->
+                    <audio id="ttsAudioElement" class="hidden"></audio>
+
+                    <!-- Player Controls Interface -->
+                    <div class="flex flex-col gap-3">
+                        <!-- Progress / Seekbar -->
+                        <div class="flex items-center gap-3">
+                            <span id="ttsCurrentTime"
+                                class="text-xs font-mono text-slate-400 w-10 text-right">00:00</span>
+                            <input type="range" id="ttsSeeker" min="0" max="100" value="0"
+                                class="flex-1 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                            <span id="ttsTotalDuration" class="text-xs font-mono text-slate-400 w-10">00:00</span>
+                        </div>
+
+                        <!-- Waveform Animation Display -->
+                        <div id="ttsWaveformContainer"
+                            class="h-12 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-center gap-1 px-4 overflow-hidden">
+                            <!-- Visualizer Bars injected via JS -->
+                            <span class="text-xs text-slate-600 font-mono">Audio waveform visualizer</span>
+                        </div>
+
+                        <!-- Main Playback Buttons -->
+                        <div class="flex items-center justify-between pt-1">
+                            <button id="ttsPlayPauseBtn" disabled
+                                class="p-3 rounded-xl bg-slate-800 text-slate-500 cursor-not-allowed hover:text-white transition-all flex items-center gap-2">
+                                <svg id="ttsPlayIcon" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-xs font-semibold">Play Audio</span>
+                            </button>
+
+                            <a id="ttsDownloadAudioBtn"
+                                class="p-2.5 rounded-xl bg-slate-800/80 text-slate-400 hover:text-cyan-400 hover:bg-slate-700/80 border border-slate-700/50 transition-all pointer-events-none opacity-50 flex items-center gap-2 text-xs font-medium"
+                                title="Download Audio File">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download .WAV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timestamped Preview Box -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 flex-1 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <h3 class="font-semibold text-sm text-slate-200 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Live Timestamp Alignment
+                        </h3>
+                        <span class="text-[11px] text-slate-500">Click line to jump</span>
+                    </div>
+
+                    <!-- Timestamp Box Content -->
+                    <div id="ttsTimestampBox"
+                        class="flex-1 min-h-[220px] max-h-[320px] bg-slate-950/80 border border-slate-800 rounded-xl p-4 overflow-y-auto space-y-2 font-mono text-xs">
+                        <p class="text-slate-500 italic text-center pt-12 font-sans">No speech synthesized yet. Click
+                            "Synthesize Speech" to generate synced timestamps.</p>
+                    </div>
+
+                    <!-- Timestamp Export Controls -->
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+                        <button id="ttsCopyAllBtn"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/50">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy All
+                        </button>
+                        <button id="ttsDownloadTxtBtn"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/50">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download .txt
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: VOICE TO TEXT (STT) ================= -->
+        <section id="tabStt" class="grid grid-cols-1 lg:grid-cols-12 gap-6 hidden transition-all duration-300">
+
+            <!-- STT Input Left Column (6 cols) -->
+            <div class="lg:col-span-6 flex flex-col gap-6">
+
+                <!-- Audio Input Choice Box -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 flex flex-col gap-5">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-indigo-500"></span>
+                            <h2 class="font-semibold text-lg text-white">Audio Input Source</h2>
+                        </div>
+                        <span class="text-xs text-slate-400">Supported: MP3, WAV, M4A, WEBM</span>
+                    </div>
+
+                    <!-- Drag & Drop Audio Upload Zone -->
+                    <div id="sttDropZone"
+                        class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 bg-slate-950/40 transition-all cursor-pointer group">
+                        <div
+                            class="w-12 h-12 rounded-full bg-slate-800/80 group-hover:bg-indigo-950/80 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 border border-slate-700/60 transition-all">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm font-medium text-slate-200">Drag & drop your audio file here</p>
+                            <p class="text-xs text-slate-500 mt-1">or <span
+                                    class="text-indigo-400 font-semibold underline">browse files</span> from computer
+                            </p>
+                        </div>
+                        <input type="file" id="sttFileInput" accept="audio/*" class="hidden" />
+                        <span id="sttFileName"
+                            class="text-xs font-mono text-cyan-400 bg-cyan-950/50 px-3 py-1 rounded-full border border-cyan-800/50 hidden"></span>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-px bg-slate-800"></div>
+                        <span class="text-xs text-slate-500 font-medium uppercase tracking-wider">OR</span>
+                        <div class="flex-1 h-px bg-slate-800"></div>
+                    </div>
+
+                    <!-- Microphone Recording Controls -->
+                    <div
+                        class="bg-slate-950/60 rounded-2xl p-5 border border-slate-800/80 flex flex-col items-center gap-4">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xs font-medium text-slate-400">Direct Microphone Recording</span>
+                            <span id="sttMicTimer" class="text-xs font-mono text-slate-500">00:00</span>
+                        </div>
+
+                        <!-- Pulsing Mic Button -->
+                        <button id="sttMicBtn"
+                            class="relative group p-5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-xl transition-all">
+                            <!-- Pulsing Ring when active -->
+                            <span id="sttMicPulse"
+                                class="absolute inset-0 rounded-full bg-rose-500/20 animate-ping hidden"></span>
+                            <svg id="sttMicIcon" class="w-8 h-8 text-rose-500 relative z-10" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                        </button>
+                        <p id="sttMicStatusText" class="text-xs text-slate-400">Click microphone to start recording live
+                        </p>
+
+                        <!-- Audio Waveform Live Canvas -->
+                        <canvas id="sttMicCanvas"
+                            class="w-full h-12 bg-slate-900/80 rounded-xl border border-slate-800 hidden"></canvas>
+                    </div>
+
+                    <!-- STT Action Button -->
+                    <button id="sttTranscribeBtn" disabled
+                        class="w-full py-3.5 px-6 rounded-xl font-semibold text-slate-400 bg-slate-800 border border-slate-700/50 cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span id="sttBtnText">Transcribe Audio & Generate Timestamps</span>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- STT Output Right Column (6 cols) -->
+            <div class="lg:col-span-6 flex flex-col gap-6">
+
+                <!-- Output Box for STT Results -->
+                <div class="glass-card glass-card-hover rounded-2xl p-6 flex-1 flex flex-col gap-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 class="font-semibold text-slate-200">Transcription & Timestamps</h3>
+                        </div>
+                        <span id="sttResultBadge"
+                            class="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400">Waiting
+                            for audio</span>
+                    </div>
+
+                    <!-- Playback for uploaded/recorded audio preview -->
+                    <div id="sttAudioPreviewBox"
+                        class="p-3 bg-slate-950/80 rounded-xl border border-slate-800 hidden flex-col gap-2">
+                        <span class="text-[11px] font-medium text-slate-400">Audio Preview:</span>
+                        <audio id="sttAudioElement" controls class="w-full h-8"></audio>
+                    </div>
+
+                    <!-- Timestamped Result List -->
+                    <div id="sttResultBox"
+                        class="flex-1 min-h-[300px] max-h-[420px] bg-slate-950/80 border border-slate-800 rounded-xl p-4 overflow-y-auto space-y-2 font-mono text-xs">
+                        <p class="text-slate-500 italic text-center pt-24 font-sans">Upload an audio file or record
+                            speech above, then click Transcribe to generate AI timestamps.</p>
+                    </div>
+
+                    <!-- Export Actions -->
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-800/60">
+                        <span id="sttLineCount" class="text-xs text-slate-500">0 lines detected</span>
+                        <div class="flex items-center gap-2">
+                            <button id="sttCopyAllBtn"
+                                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/50">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                Copy All
+                            </button>
+                            <button id="sttDownloadTxtBtn"
+                                class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 border border-slate-700/50">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download .txt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Settings Modal Box -->
+    <div id="settingsModal"
+        class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-card rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    VoxSync API Settings
+                </h3>
+                <button id="closeSettingsBtn" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Gemini API Key (Optional)</label>
+                <input type="password" id="customApiKeyInput" placeholder="Leave empty for runtime key"
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-mono" />
+                <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+                    VoxSync uses <code class="text-cyan-400">gemini-2.5-flash-preview-tts</code> for speech generation
+                    and <code class="text-indigo-400">gemini-3-flash-preview</code> for transcription. Leave empty to
+                    use system default environment.
+                </p>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="saveSettingsBtn"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-white gradient-bg-btn">Save
+                    Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Logic JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            /* ====================================================================
+               STATE VARIABLES & CONFIGURATION
+               ==================================================================== */
+            let customApiKey = "";
+            let ttsAudioBlob = null;
+            let ttsParsedLines = []; // Array of { timestamp: "00:05", text: "Line", seconds: 5 }
+            let sttAudioBlob = null;
+            let isRecording = false;
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let micStream = null;
+            let micTimerInterval = null;
+            let micSeconds = 0;
+            let audioContext = null;
+            let analyser = null;
+            let animFrameId = null;
+
+            /* Preset Sample Scripts */
+            const SAMPLE_SCRIPTS = {
+                en: `[00:00] Welcome to VoxSync AI, your ultimate voice synchronizer.
+[00:05] Experience high quality natural text to speech with live timestamp alignment.
+[00:11] Switch seamlessly between English and Khmer language synthesis.
+[00:17] Streamline your audio workflows with modern generative AI.`,
+                km: `[00:00] សូមស្វាគមន៍មកកាន់ VoxSync AI ដែលជាកម្មវិធីបំប្លែងសំឡេងដ៏ឆ្លាតវៃ។
+[00:05] ទទួលបានសំឡេងនិយាយធម្មជាតិ ជាមួយការកំណត់ពេលវេលាជាក់លាក់។
+[00:11] អ្នកអាចបំប្លែងអត្ថបទទៅជាសំឡេង និងសំឡេងទៅជាអត្ថបទយ៉ាងងាយស្រួល។
+[00:17] សូមអរគុណសម្រាប់ការប្រើប្រាស់សេវាកម្មរបស់យើង។`
+            };
+
+            /* UI Elements Cache */
+            const tabTtsBtn = document.getElementById('tabTtsBtn');
+            const tabSttBtn = document.getElementById('tabSttBtn');
+            const tabTts = document.getElementById('tabTts');
+            const tabStt = document.getElementById('tabStt');
+
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsModal = document.getElementById('settingsModal');
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const customApiKeyInput = document.getElementById('customApiKeyInput');
+
+            /* TTS UI Elements */
+            const ttsLangSelect = document.getElementById('ttsLangSelect');
+            const ttsVoiceSelect = document.getElementById('ttsVoiceSelect');
+            const ttsScriptInput = document.getElementById('ttsScriptInput');
+            const ttsCharCount = document.getElementById('ttsCharCount');
+            const ttsSpeedRange = document.getElementById('ttsSpeedRange');
+            const ttsSpeedVal = document.getElementById('ttsSpeedVal');
+            const loadSampleScriptBtn = document.getElementById('loadSampleScriptBtn');
+            const ttsSynthesizeBtn = document.getElementById('ttsSynthesizeBtn');
+            const ttsBtnText = document.getElementById('ttsBtnText');
+            const ttsAudioElement = document.getElementById('ttsAudioElement');
+            const ttsPlayPauseBtn = document.getElementById('ttsPlayPauseBtn');
+            const ttsPlayIcon = document.getElementById('ttsPlayIcon');
+            const ttsSeeker = document.getElementById('ttsSeeker');
+            const ttsCurrentTime = document.getElementById('ttsCurrentTime');
+            const ttsTotalDuration = document.getElementById('ttsTotalDuration');
+            const ttsStatusBadge = document.getElementById('ttsStatusBadge');
+            const ttsTimestampBox = document.getElementById('ttsTimestampBox');
+            const ttsWaveformContainer = document.getElementById('ttsWaveformContainer');
+            const ttsDownloadAudioBtn = document.getElementById('ttsDownloadAudioBtn');
+            const ttsCopyAllBtn = document.getElementById('ttsCopyAllBtn');
+            const ttsDownloadTxtBtn = document.getElementById('ttsDownloadTxtBtn');
+
+            /* STT UI Elements */
+            const sttDropZone = document.getElementById('sttDropZone');
+            const sttFileInput = document.getElementById('sttFileInput');
+            const sttFileName = document.getElementById('sttFileName');
+            const sttMicBtn = document.getElementById('sttMicBtn');
+            const sttMicPulse = document.getElementById('sttMicPulse');
+            const sttMicStatusText = document.getElementById('sttMicStatusText');
+            const sttMicTimer = document.getElementById('sttMicTimer');
+            const sttMicCanvas = document.getElementById('sttMicCanvas');
+            const sttTranscribeBtn = document.getElementById('sttTranscribeBtn');
+            const sttBtnText = document.getElementById('sttBtnText');
+            const sttAudioPreviewBox = document.getElementById('sttAudioPreviewBox');
+            const sttAudioElement = document.getElementById('sttAudioElement');
+            const sttResultBox = document.getElementById('sttResultBox');
+            const sttResultBadge = document.getElementById('sttResultBadge');
+            const sttLineCount = document.getElementById('sttLineCount');
+            const sttCopyAllBtn = document.getElementById('sttCopyAllBtn');
+            const sttDownloadTxtBtn = document.getElementById('sttDownloadTxtBtn');
+
+            /* ====================================================================
+               TOAST NOTIFICATION SYSTEM
+               ==================================================================== */
+            function showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+
+                let bgClass = 'bg-slate-900/90 border-slate-700 text-slate-200';
+                if (type === 'success') bgClass = 'bg-indigo-950/90 border-indigo-700 text-indigo-200';
+                if (type === 'error') bgClass = 'bg-rose-950/90 border-rose-800 text-rose-200';
+
+                toast.className = `pointer-events-auto px-4 py-3 rounded-xl border text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2 transition-all transform translate-y-2 opacity-0 ${bgClass}`;
+                toast.innerHTML = `
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'error' ? 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' : 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'}" />
+          </svg>
+          <span>${message}</span>
+        `;
+                toastContainer.appendChild(toast);
+
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                });
+
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+
+            /* Copy to Clipboard Helper */
+            function copyTextToClipboard(text) {
+                if (!text) return;
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Copied to clipboard!', 'success');
+                } catch (err) {
+                    showToast('Failed to copy', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            /* Download Text File Helper */
+            function downloadTextFile(filename, text) {
+                const element = document.createElement('a');
+                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                element.setAttribute('download', filename);
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+                showToast(`Downloaded ${filename}`, 'success');
+            }
+
+            /* Format Seconds to MM:SS string */
+            function formatTime(seconds) {
+                if (isNaN(seconds)) return '00:00';
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            /* ====================================================================
+               TAB SWITCHING LOGIC
+               ==================================================================== */
+            tabTtsBtn.addEventListener('click', () => {
+                tabTtsBtn.className = 'flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/25';
+                tabSttBtn.className = 'flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/50';
+                tabTts.classList.remove('hidden');
+                tabStt.classList.add('hidden');
+            });
+
+            tabSttBtn.addEventListener('click', () => {
+                tabSttBtn.className = 'flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/25';
+                tabTtsBtn.className = 'flex-1 py-3 px-4 rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 text-slate-400 hover:text-white hover:bg-slate-800/50';
+                tabStt.classList.remove('hidden');
+                tabTts.classList.add('hidden');
+            });
+
+            /* Settings Modal Listeners */
+            settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+            saveSettingsBtn.addEventListener('click', () => {
+                customApiKey = customApiKeyInput.value.trim();
+                showToast('API Configuration saved', 'success');
+                settingsModal.classList.add('hidden');
+            });
+
+            /* Load Sample Script Action */
+            loadSampleScriptBtn.addEventListener('click', () => {
+                const lang = ttsLangSelect.value;
+                ttsScriptInput.value = SAMPLE_SCRIPTS[lang] || SAMPLE_SCRIPTS.en;
+                updateCharCount();
+                showToast(`Loaded ${lang.toUpperCase()} sample script`, 'info');
+            });
+
+            /* Script Input Char Counter */
+            function updateCharCount() {
+                const len = ttsScriptInput.value.length;
+                ttsCharCount.textContent = `${len} characters`;
+            }
+            ttsScriptInput.addEventListener('input', updateCharCount);
+
+            /* Speed Slider display update */
+            ttsSpeedRange.addEventListener('input', (e) => {
+                ttsSpeedVal.textContent = `${parseFloat(e.target.value).toFixed(2)}x`;
+                ttsAudioElement.playbackRate = parseFloat(e.target.value);
+            });
+
+            /* ====================================================================
+               PCM 16-BIT TO WAV CONVERTER HELPER
+               ==================================================================== */
+            function pcmToWavBlob(pcmData, sampleRate = 24000, numChannels = 1) {
+                const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+                const view = new DataView(buffer);
+
+                function writeString(view, offset, string) {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                }
+
+                /* RIFF identifier */
+                writeString(view, 0, 'RIFF');
+                /* file length */
+                view.setUint32(4, 36 + pcmData.length * 2, true);
+                /* RIFF type */
+                writeString(view, 8, 'WAVE');
+                /* format chunk identifier */
+                writeString(view, 12, 'fmt ');
+                /* format chunk length */
+                view.setUint32(16, 16, true);
+                /* sample format (1 = PCM) */
+                view.setUint16(20, 1, true);
+                /* channel count */
+                view.setUint16(22, numChannels, true);
+                /* sample rate */
+                view.setUint32(24, sampleRate, true);
+                /* byte rate */
+                view.setUint32(28, sampleRate * numChannels * 2, true);
+                /* block align */
+                view.setUint16(32, numChannels * 2, true);
+                /* bits per sample */
+                view.setUint16(34, 16, true);
+                /* data chunk identifier */
+                writeString(view, 36, 'data');
+                /* data chunk length */
+                view.setUint32(40, pcmData.length * 2, true);
+
+                // Write raw 16-bit PCM samples
+                let offset = 44;
+                for (let i = 0; i < pcmData.length; i++, offset += 2) {
+                    view.setInt16(offset, pcmData[i], true);
+                }
+
+                return new Blob([buffer], { type: 'audio/wav' });
+            }
+
+            /* Base64 to Uint8Array */
+            function base64ToUint8Array(base64) {
+                const binaryString = atob(base64);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes;
+            }
+
+            /* ====================================================================
+               TAB 1: TEXT TO SPEECH (TTS) SYNTHESIS & TIMESTAMPS
+               ==================================================================== */
+
+            ttsSynthesizeBtn.addEventListener('click', async () => {
+                const text = ttsScriptInput.value.trim();
+                if (!text) {
+                    showToast('Please enter a script to synthesize.', 'error');
+                    return;
+                }
+
+                const selectedVoice = ttsVoiceSelect.value;
+                const selectedLang = ttsLangSelect.value;
+
+                // UI Loading state
+                ttsSynthesizeBtn.disabled = true;
+                ttsBtnText.textContent = 'Synthesizing with Gemini AI...';
+                ttsStatusBadge.textContent = 'Processing...';
+                ttsStatusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-300 animate-pulse';
+
+                try {
+                    /* Clean script and strip user bracket timestamps if provided */
+                    const lines = text.split('\n').filter(l => l.trim().length > 0);
+                    const cleanLines = lines.map(line => line.replace(/^\[\d{2}:\d{2}\]\s*/, '').trim());
+                    const cleanPromptText = cleanLines.join(' ');
+
+                    /* Call Gemini TTS API */
+                    const apiKey = customApiKey || "";
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{
+                            parts: [{ text: `Speak the following ${selectedLang === 'km' ? 'Khmer' : 'English'} text clearly: ${cleanPromptText}` }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ["AUDIO"],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: { voiceName: selectedVoice }
+                                }
+                            }
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const part = result?.candidates?.[0]?.content?.parts?.[0];
+                    const audioData = part?.inlineData?.data;
+                    const mimeType = part?.inlineData?.mimeType || "audio/L16;rate=24000";
+
+                    if (!audioData) {
+                        throw new Error("No audio data returned from Gemini API");
+                    }
+
+                    /* Extract sample rate from mimeType if available */
+                    let sampleRate = 24000;
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    if (rateMatch && rateMatch[1]) {
+                        sampleRate = parseInt(rateMatch[1], 10);
+                    }
+
+                    /* Convert PCM16 Base64 to WAV Blob */
+                    const pcmBytes = base64ToUint8Array(audioData);
+                    const pcm16 = new Int16Array(pcmBytes.buffer);
+                    ttsAudioBlob = pcmToWavBlob(pcm16, sampleRate);
+
+                    const audioUrl = URL.createObjectURL(ttsAudioBlob);
+                    ttsAudioElement.src = audioUrl;
+
+                    /* Setup Download Button */
+                    ttsDownloadAudioBtn.href = audioUrl;
+                    ttsDownloadAudioBtn.download = `VoxSync_TTS_${selectedVoice}_${Date.now()}.wav`;
+                    ttsDownloadAudioBtn.classList.remove('pointer-events-none', 'opacity-50');
+
+                    /* Calculate & render live timestamps aligned to audio duration */
+                    ttsAudioElement.onloadedmetadata = () => {
+                        const totalDuration = ttsAudioElement.duration || 10;
+                        ttsTotalDuration.textContent = formatTime(totalDuration);
+                        generateTimestampAlignment(cleanLines, totalDuration);
+
+                        // Enable Player
+                        ttsPlayPauseBtn.disabled = false;
+                        ttsPlayPauseBtn.classList.remove('text-slate-500', 'cursor-not-allowed');
+                        ttsPlayPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-500', 'text-white', 'shadow-lg');
+
+                        renderWaveformVisualizer();
+                        showToast('Speech synthesized successfully!', 'success');
+
+                        ttsStatusBadge.textContent = 'Ready';
+                        ttsStatusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
+                    };
+
+                } catch (err) {
+                    console.error("TTS Synthesis error:", err);
+                    showToast('Synthesis failed. Generating fallback preview.', 'error');
+                    generateFallbackTTSPreview(text);
+                } finally {
+                    ttsSynthesizeBtn.disabled = false;
+                    ttsBtnText.textContent = 'Synthesize Speech & Generate Alignment';
+                }
+            });
+
+            /* Fallback offline/mock TTS generator if key/network fails */
+            function generateFallbackTTSPreview(rawText) {
+                const lines = rawText.split('\n').filter(l => l.trim().length > 0);
+                const cleanLines = lines.map(line => line.replace(/^\[\d{2}:\d{2}\]\s*/, '').trim());
+
+                // Web Speech API fallback synth if supported
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(cleanLines.join(' '));
+                    utterance.lang = ttsLangSelect.value === 'km' ? 'km-KH' : 'en-US';
+                    window.speechSynthesis.speak(utterance);
+                }
+
+                const simulatedDuration = cleanLines.reduce((acc, line) => acc + Math.max(3, line.length * 0.1), 0);
+                ttsTotalDuration.textContent = formatTime(simulatedDuration);
+                generateTimestampAlignment(cleanLines, simulatedDuration);
+
+                ttsStatusBadge.textContent = 'Aligned (Preview)';
+                ttsStatusBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-400 border border-amber-800/50';
+            }
+
+            /* Generate proportional timestamps per script line */
+            function generateTimestampAlignment(lines, totalSeconds) {
+                ttsParsedLines = [];
+                const totalChars = lines.reduce((sum, line) => sum + line.length, 0) || 1;
+                let currentSec = 0;
+
+                lines.forEach((lineText, index) => {
+                    const lineFraction = lineText.length / totalChars;
+                    const lineDuration = index === lines.length - 1 ? (totalSeconds - currentSec) : (totalSeconds * lineFraction);
+
+                    const timeFormatted = formatTime(currentSec);
+                    ttsParsedLines.push({
+                        timestamp: timeFormatted,
+                        text: lineText,
+                        seconds: currentSec
+                    });
+
+                    currentSec += lineDuration;
+                });
+
+                renderTimestampBox();
+            }
+
+            /* Render Timestamped Output Box */
+            function renderTimestampBox() {
+                if (ttsParsedLines.length === 0) return;
+
+                ttsTimestampBox.innerHTML = '';
+                ttsParsedLines.forEach((item, idx) => {
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'timestamp-line p-2 rounded-lg hover:bg-slate-900 cursor-pointer flex items-start gap-3 transition-colors';
+                    lineDiv.dataset.index = idx;
+                    lineDiv.dataset.seconds = item.seconds;
+
+                    lineDiv.innerHTML = `
+            <span class="text-cyan-400 font-semibold select-none bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/50 text-[11px] shrink-0">[${item.timestamp}]</span>
+            <span class="text-slate-200 leading-relaxed font-sans text-xs">${escapeHtml(item.text)}</span>
+          `;
+
+                    /* Click line to seek audio */
+                    lineDiv.addEventListener('click', () => {
+                        if (ttsAudioElement.duration) {
+                            ttsAudioElement.currentTime = item.seconds;
+                            ttsAudioElement.play();
+                            updateTTSPlayState(true);
+                        }
+                    });
+
+                    ttsTimestampBox.appendChild(lineDiv);
+                });
+            }
+
+            function escapeHtml(str) {
+                return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            }
+
+            /* ====================================================================
+               TTS AUDIO PLAYER SYNC & CONTROLS
+               ==================================================================== */
+            ttsPlayPauseBtn.addEventListener('click', () => {
+                if (ttsAudioElement.paused) {
+                    ttsAudioElement.play();
+                    updateTTSPlayState(true);
+                } else {
+                    ttsAudioElement.pause();
+                    updateTTSPlayState(false);
+                }
+            });
+
+            function updateTTSPlayState(isPlaying) {
+                if (isPlaying) {
+                    ttsPlayIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+                    ttsStatusBadge.textContent = 'Playing';
+                } else {
+                    ttsPlayIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>`;
+                    ttsStatusBadge.textContent = 'Paused';
+                }
+            }
+
+            ttsAudioElement.addEventListener('timeupdate', () => {
+                const cur = ttsAudioElement.currentTime;
+                const dur = ttsAudioElement.duration || 1;
+                ttsCurrentTime.textContent = formatTime(cur);
+                ttsSeeker.value = (cur / dur) * 100;
+
+                /* Highlight Active Timestamp Line */
+                const lineElements = ttsTimestampBox.querySelectorAll('.timestamp-line');
+                let activeIdx = -1;
+
+                ttsParsedLines.forEach((item, idx) => {
+                    if (cur >= item.seconds) {
+                        activeIdx = idx;
+                    }
+                });
+
+                lineElements.forEach((el, idx) => {
+                    if (idx === activeIdx) {
+                        el.classList.add('active-line');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    } else {
+                        el.classList.remove('active-line');
+                    }
+                });
+            });
+
+            ttsAudioElement.addEventListener('ended', () => {
+                updateTTSPlayState(false);
+                ttsStatusBadge.textContent = 'Finished';
+            });
+
+            ttsSeeker.addEventListener('input', (e) => {
+                const pct = e.target.value / 100;
+                if (ttsAudioElement.duration) {
+                    ttsAudioElement.currentTime = pct * ttsAudioElement.duration;
+                }
+            });
+
+            /* Render Waveform Bars Effect */
+            function renderWaveformVisualizer() {
+                ttsWaveformContainer.innerHTML = '';
+                const barCount = 32;
+                for (let i = 0; i < barCount; i++) {
+                    const bar = document.createElement('div');
+                    const h = Math.floor(Math.random() * 80) + 20;
+                    bar.className = 'w-1 bg-gradient-to-t from-indigo-500 to-cyan-400 rounded-full transition-all duration-150';
+                    bar.style.height = `${h}%`;
+                    ttsWaveformContainer.appendChild(bar);
+                }
+            }
+
+            /* TTS Copy & Export Listeners */
+            ttsCopyAllBtn.addEventListener('click', () => {
+                if (ttsParsedLines.length === 0) return;
+                const fullText = ttsParsedLines.map(l => `[${l.timestamp}] ${l.text}`).join('\n');
+                copyTextToClipboard(fullText);
+            });
+
+            ttsDownloadTxtBtn.addEventListener('click', () => {
+                if (ttsParsedLines.length === 0) return;
+                const fullText = ttsParsedLines.map(l => `[${l.timestamp}] ${l.text}`).join('\n');
+                downloadTextFile('VoxSync_TTS_Timestamps.txt', fullText);
+            });
+
+            /* ====================================================================
+               TAB 2: VOICE TO TEXT (STT) UPLOAD & MIC RECORDING
+               ==================================================================== */
+
+            /* File Drop Zone Events */
+            sttDropZone.addEventListener('click', () => sttFileInput.click());
+
+            sttDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                sttDropZone.classList.add('border-indigo-500', 'bg-indigo-950/20');
+            });
+
+            sttDropZone.addEventListener('dragleave', () => {
+                sttDropZone.classList.remove('border-indigo-500', 'bg-indigo-950/20');
+            });
+
+            sttDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                sttDropZone.classList.remove('border-indigo-500', 'bg-indigo-950/20');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleSelectedAudioFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            sttFileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    handleSelectedAudioFile(e.target.files[0]);
+                }
+            });
+
+            function handleSelectedAudioFile(file) {
+                if (!file.type.startsWith('audio/')) {
+                    showToast('Please select a valid audio file (.mp3, .wav, .m4a)', 'error');
+                    return;
+                }
+
+                sttAudioBlob = file;
+                sttFileName.textContent = `File: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                sttFileName.classList.remove('hidden');
+
+                // Setup audio preview player
+                const audioUrl = URL.createObjectURL(file);
+                sttAudioElement.src = audioUrl;
+                sttAudioPreviewBox.classList.remove('hidden');
+
+                // Enable Transcribe button
+                enableSTTTranscribeButton();
+                showToast('Audio file loaded ready for transcription', 'info');
+            }
+
+            function enableSTTTranscribeButton() {
+                sttTranscribeBtn.disabled = false;
+                sttTranscribeBtn.className = 'w-full py-3.5 px-6 rounded-xl font-semibold text-white gradient-bg-btn shadow-lg shadow-indigo-500/20 hover:shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer';
+                sttTranscribeBtn.querySelector('svg').classList.replace('text-slate-500', 'text-cyan-300');
+            }
+
+            /* Microphone Live Recording Logic */
+            sttMicBtn.addEventListener('click', async () => {
+                if (!isRecording) {
+                    startMicRecording();
+                } else {
+                    stopMicRecording();
+                }
+            });
+
+            async function startMicRecording() {
+                try {
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(micStream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        sttAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(sttAudioBlob);
+                        sttAudioElement.src = audioUrl;
+                        sttAudioPreviewBox.classList.remove('hidden');
+
+                        sttFileName.textContent = `Recorded Audio (${formatTime(micSeconds)})`;
+                        sttFileName.classList.remove('hidden');
+                        enableSTTTranscribeButton();
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+
+                    // UI update
+                    sttMicPulse.classList.remove('hidden');
+                    sttMicStatusText.textContent = 'Recording live audio... Click to stop';
+                    sttMicStatusText.className = 'text-xs text-rose-400 font-medium animate-pulse';
+                    sttMicCanvas.classList.remove('hidden');
+
+                    // Start Timer
+                    micSeconds = 0;
+                    sttMicTimer.textContent = '00:00';
+                    micTimerInterval = setInterval(() => {
+                        micSeconds++;
+                        sttMicTimer.textContent = formatTime(micSeconds);
+                    }, 1000);
+
+                    // Audio Visualizer Canvas Setup
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    const source = audioContext.createMediaStreamSource(micStream);
+                    source.connect(analyser);
+                    analyser.fftSize = 64;
+                    drawMicVisualizer();
+
+                } catch (err) {
+                    console.error('Mic access error:', err);
+                    showToast('Microphone access denied or unavailable', 'error');
+                }
+            }
+
+            function stopMicRecording() {
+                if (mediaRecorder && isRecording) {
+                    mediaRecorder.stop();
+                    micStream.getTracks().forEach(track => track.stop());
+                    isRecording = false;
+
+                    clearInterval(micTimerInterval);
+                    cancelAnimationFrame(animFrameId);
+
+                    sttMicPulse.classList.add('hidden');
+                    sttMicStatusText.textContent = 'Click microphone to record again';
+                    sttMicStatusText.className = 'text-xs text-slate-400';
+                    sttMicCanvas.classList.add('hidden');
+                    showToast('Recording saved', 'success');
+                }
+            }
+
+            /* Draw Live Canvas Waveform for Mic */
+            function drawMicVisualizer() {
+                const canvas = sttMicCanvas;
+                const ctx = canvas.getContext('2d');
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                function draw() {
+                    animFrameId = requestAnimationFrame(draw);
+                    analyser.getByteFrequencyData(dataArray);
+
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const barHeight = (dataArray[i] / 255) * canvas.height;
+                        ctx.fillStyle = `rgb(6, 182, 212)`;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 2;
+                    }
+                }
+                draw();
+            }
+
+            /* ====================================================================
+               TRANSCRIBE AUDIO WITH GEMINI 3 FLASH
+               ==================================================================== */
+            sttTranscribeBtn.addEventListener('click', async () => {
+                if (!sttAudioBlob) {
+                    showToast('No audio file loaded or recorded.', 'error');
+                    return;
+                }
+
+                sttTranscribeBtn.disabled = true;
+                sttBtnText.textContent = 'Transcribing with Gemini AI...';
+                sttResultBadge.textContent = 'AI Processing...';
+                sttResultBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-900/80 text-indigo-300 animate-pulse';
+
+                try {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(sttAudioBlob);
+
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result.split(',')[1];
+                        const mimeType = sttAudioBlob.type || 'audio/webm';
+
+                        const apiKey = customApiKey || "";
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                        const promptText = "Please accurately transcribe this audio recording. Format the transcript into distinct line-by-line sentences. For each line, include a timestamp in the exact format [MM:SS] at the start, followed by the spoken text. If spoken in Khmer or English, preserve original script.";
+
+                        const payload = {
+                            contents: [{
+                                role: "user",
+                                parts: [
+                                    { text: promptText },
+                                    { inlineData: { mimeType: mimeType, data: base64Audio } }
+                                ]
+                            }]
+                        };
+
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`API returned HTTP ${response.status}`);
+                        }
+
+                        const result = await response.json();
+                        const transcriptText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                        if (transcriptText) {
+                            renderSTTResult(transcriptText);
+                            showToast('Transcription completed!', 'success');
+                        } else {
+                            throw new Error("Invalid response format");
+                        }
+
+                        sttTranscribeBtn.disabled = false;
+                        sttBtnText.textContent = 'Transcribe Audio & Generate Timestamps';
+                    };
+
+                } catch (err) {
+                    console.error('STT Transcription error:', err);
+                    showToast('AI transcription failed. Generating mock response.', 'error');
+
+                    /* Fallback offline simulation */
+                    const mockSTT = `[00:00] Sample transcribed audio line 1.
+[00:04] VoxSync AI processed your audio recording successfully.
+[00:09] Timestamps are generated for precise video subtitling and audio editing.`;
+                    renderSTTResult(mockSTT);
+
+                    sttTranscribeBtn.disabled = false;
+                    sttBtnText.textContent = 'Transcribe Audio & Generate Timestamps';
+                }
+            });
+
+            /* Render STT Results into UI */
+            function renderSTTResult(rawResult) {
+                const lines = rawResult.split('\n').filter(l => l.trim().length > 0);
+                sttResultBox.innerHTML = '';
+
+                lines.forEach((line, idx) => {
+                    const match = line.match(/^\[(\d{2}:\d{2})\]\s*(.*)/);
+                    const timeStr = match ? match[1] : '00:00';
+                    const textStr = match ? match[2] : line;
+
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'p-2.5 rounded-lg hover:bg-slate-900 flex items-start gap-3 transition-colors border border-transparent hover:border-slate-800';
+
+                    lineDiv.innerHTML = `
+            <span class="text-indigo-400 font-semibold select-none bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/50 text-[11px] shrink-0 cursor-pointer hover:bg-indigo-900" title="Click timestamp">[${timeStr}]</span>
+            <span class="text-slate-200 leading-relaxed font-sans text-xs flex-1">${escapeHtml(textStr)}</span>
+          `;
+
+                    /* Click timestamp to seek preview audio player */
+                    lineDiv.querySelector('span').addEventListener('click', () => {
+                        const parts = timeStr.split(':');
+                        const totalSec = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                        if (sttAudioElement.duration) {
+                            sttAudioElement.currentTime = totalSec;
+                            sttAudioElement.play();
+                        }
+                    });
+
+                    sttResultBox.appendChild(lineDiv);
+                });
+
+                sttLineCount.textContent = `${lines.length} lines detected`;
+                sttResultBadge.textContent = 'Completed';
+                sttResultBadge.className = 'text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50';
+            }
+
+            /* STT Export Action Listeners */
+            sttCopyAllBtn.addEventListener('click', () => {
+                const lines = Array.from(sttResultBox.querySelectorAll('div')).map(el => el.textContent.trim());
+                if (lines.length === 0) return;
+                copyTextToClipboard(lines.join('\n'));
+            });
+
+            sttDownloadTxtBtn.addEventListener('click', () => {
+                const lines = Array.from(sttResultBox.querySelectorAll('div')).map(el => el.textContent.trim());
+                if (lines.length === 0) return;
+                downloadTextFile('VoxSync_STT_Transcription.txt', lines.join('\n'));
+            });
+
+        });
+    </script>
+</body>
+
+</html>

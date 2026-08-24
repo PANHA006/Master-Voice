@@ -1,0 +1,110 @@
+# ==========================================
+# VoxSync AI - Git Ignore Rules
+# ==========================================
+
+# ------------------------------------------
+# Environment & Secret Credentials
+# ------------------------------------------
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+!.env.example
+*.pem
+*.key
+
+# ------------------------------------------
+# Dependencies & Package Managers
+# ------------------------------------------
+node_modules/
+jspm_packages/
+.pnp
+.pnp.js
+.pnpm-store
+
+# ------------------------------------------
+# Python (Voice Cloning Scripts & Virtualenvs)
+# ------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+
+# ------------------------------------------
+# Storage & Runtime Audio Generation
+# ------------------------------------------
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/outputs/*
+!storage/outputs/.gitkeep
+storage/temp/
+storage/cache/
+storage/cloned-voices.json
+
+# Test and temporary audio files in root
+test-*.mp3
+test-*.wav
+test-khmer.mp3
+
+# ------------------------------------------
+# Logs & Process Artifacts
+# ------------------------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------
+# Testing & Code Coverage
+# ------------------------------------------
+coverage/
+.nyc_output/
+
+# ------------------------------------------
+# IDE & Code Editor Configurations
+# ------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*~
+
+# ------------------------------------------
+# Operating System Artifacts
+# ------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
