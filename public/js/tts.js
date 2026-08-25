@@ -105,72 +105,109 @@ When the sun set, the world went dark.`,
 
     function updateVoiceDropdown() {
         const lang = elements.langSelect.value;
-        const available = voicesData[lang] || [];
+        const allAvailable = voicesData[lang] || [];
         elements.voiceSelect.innerHTML = '';
 
-        if (available.length === 0) {
+        if (allAvailable.length === 0) {
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = '-- No custom voices (Create in Voice Cloning) --';
+            option.textContent = '-- គ្មានសំឡេងសម្រាប់ភាសានេះទេ --';
             elements.voiceSelect.appendChild(option);
             return;
         }
 
+        // Filter: only show voices that the user has added to use / favorited / cloned / default
+        const activeVoices = allAvailable.filter(v => {
+            if (typeof isVoiceActiveInTTS === 'function') {
+                return isVoiceActiveInTTS(v.id);
+            }
+            return true;
+        });
+
+        const voicesToShow = activeVoices.length > 0 ? activeVoices : allAvailable.slice(0, 2);
+
         const categoryNames = {
+            'Custom': '🎛️ សំឡេងកែច្នៃផ្ទាល់ខ្លួន (Custom AI Models)',
             'Cloned': '✨ សំឡេងផ្ទាល់ខ្លួន (Cloned Voices)',
+            'Business': '💼 អាជីវកម្ម & ទីផ្សារ (Business & Finance)',
+            'News': '📰 ព័ត៌មាន & កីឡា (News & Sports)',
+            'Health': '🏥 សុខភាព & វេជ្ជសាស្ត្រ (Health & Medical)',
+            'Travel': '✈️ ទេសចរណ៍ & Vlogs (Travel & Culture)',
+            'Food': '🍲 ម្ហូបអាហារ & ចុងភៅ (Culinary & Food)',
             'Recap': '🎬 សម្រាយរឿង (Movie & Story Recap)',
             'Character': '🎭 សម្លេងតួអង្គ (Character & Roleplay)',
             'Kids': '👶 សម្លេងក្មេង (Kids & Animation)',
-            'General': '🇰🇭 សំឡេងទូទៅ (General Neural Voices)',
+            'General': '🇰🇭 សំឡេងគោលស្តង់ដារ (Standard Core Voices)',
             'Education': '📚 វីដេអូអប់រំ & មេរៀន (Education & E-learning)',
             'Documentary': '🎥 ភាពយន្តឯកសារ (Documentary)',
-            'Storytelling': '🎙️ និទានរឿង & Podcast (Storytelling)',
-            'News': '📺 ព័ត៌មាន (News & Formal)',
-            'Entertainment': '⚡ កម្សាន្ត & ពាណិជ្ជកម្ម (Entertainment)'
+            'Storytelling': '🎙️ និទានរឿង & ASMR (Storytelling)',
+            'Entertainment': '⚡ ហ្គេម & AI Tech (Entertainment)',
+            'English': '🇺🇸 English Models',
+            'International': '🌏 International Models'
         };
 
+        const favIds = (typeof getFavoriteVoiceIds === 'function') ? getFavoriteVoiceIds() : [];
+        const favoriteVoices = voicesToShow.filter(v => favIds.includes(v.id));
+        const nonFavVoices = voicesToShow.filter(v => !favIds.includes(v.id));
+
+        // 1. Render Favorites Group at the top
+        if (favoriteVoices.length > 0) {
+            const favGroup = document.createElement('optgroup');
+            favGroup.label = '⭐ សំឡេងពេញចិត្ត (Favorites)';
+            favoriteVoices.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = `⭐ ${v.name}`;
+                option.classList.add('font-bold', 'text-amber-400');
+                favGroup.appendChild(option);
+            });
+            elements.voiceSelect.appendChild(favGroup);
+        }
+
+        // 2. Render other Added / Active Voices grouped by category
         const groups = {};
-        available.forEach((v) => {
-            const cat = v.isCloned ? 'Cloned' : (v.category || 'General');
+        nonFavVoices.forEach((v) => {
+            const cat = v.isCustom ? 'Custom' : (v.isCloned ? 'Cloned' : (v.category || 'General'));
             if (!groups[cat]) groups[cat] = [];
             groups[cat].push(v);
         });
 
-        // If Khmer has distinct categories, render optgroups
-        if (lang === 'km') {
-            Object.keys(groups).forEach((cat) => {
-                const optGroup = document.createElement('optgroup');
-                optGroup.label = categoryNames[cat] || cat;
+        Object.keys(groups).forEach((cat) => {
+            const optGroup = document.createElement('optgroup');
+            optGroup.label = categoryNames[cat] || cat;
 
-                groups[cat].forEach((v) => {
-                    const option = document.createElement('option');
-                    option.value = v.id;
-                    option.textContent = v.name;
-                    if (v.isCloned) {
-                        option.classList.add('font-semibold', 'text-cyan-400');
-                    }
-                    optGroup.appendChild(option);
-                });
-
-                elements.voiceSelect.appendChild(optGroup);
-            });
-        } else {
-            // English or other languages
-            available.forEach((v) => {
+            groups[cat].forEach((v) => {
                 const option = document.createElement('option');
                 option.value = v.id;
                 option.textContent = v.name;
-                if (v.isCloned) {
+                if (v.isCustom) {
+                    option.classList.add('font-bold', 'text-fuchsia-400');
+                } else if (v.isCloned) {
                     option.classList.add('font-semibold', 'text-cyan-400');
                 }
-                elements.voiceSelect.appendChild(option);
+                optGroup.appendChild(option);
             });
-        }
+
+            elements.voiceSelect.appendChild(optGroup);
+        });
     }
 
     function setupEventListeners() {
         elements.langSelect.addEventListener('change', () => {
             updateVoiceDropdown();
+        });
+
+        // Listen for favorite and active voice changes from Test Voice Studio
+        window.addEventListener('voxsync:favoritesChanged', async () => {
+            const currentSelected = elements.voiceSelect ? elements.voiceSelect.value : null;
+            await loadVoices();
+            if (currentSelected && elements.voiceSelect) elements.voiceSelect.value = currentSelected;
+        });
+
+        window.addEventListener('voxsync:activeVoicesChanged', async () => {
+            const currentSelected = elements.voiceSelect ? elements.voiceSelect.value : null;
+            await loadVoices();
+            if (currentSelected && elements.voiceSelect) elements.voiceSelect.value = currentSelected;
         });
 
         elements.loadSampleBtn.addEventListener('click', () => {
@@ -186,19 +223,19 @@ When the sun set, the world went dark.`,
         }
         elements.scriptInput.addEventListener('input', updateCharCount);
 
-        // Auto-break lines on Khmer punctuation '។' and '៕'
-        setupKhmerAutoBreak(elements.scriptInput, updateCharCount);
+        // Smart Auto-break lines on Khmer (។, ៕) and English (., !, ?)
+        setupAutoBreak(elements.scriptInput, updateCharCount);
 
         if (elements.autoBreakBtn) {
             elements.autoBreakBtn.addEventListener('click', () => {
                 const text = elements.scriptInput.value;
                 if (!text || !text.trim()) {
-                    showToast('Please enter or paste text first', 'warning');
+                    showToast('សូមបញ្ចូល ឬបិទភ្ជាប់អត្ថបទជាមុនសិន', 'warning');
                     return;
                 }
-                elements.scriptInput.value = formatKhmerPunctuationBreak(text);
+                elements.scriptInput.value = formatPunctuationAutoBreak(text);
                 updateCharCount();
-                showToast('បានបំបែកបន្ទាត់តាមសញ្ញា (។) រួចរាល់!', 'success');
+                showToast('✓ បានបំបែកបន្ទាត់តាមសញ្ញាខណ្ឌ (។ និង .) រួចរាល់!', 'success');
             });
         }
 

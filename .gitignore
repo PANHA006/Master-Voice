@@ -52,6 +52,7 @@ storage/outputs/*
 storage/temp/
 storage/cache/
 storage/cloned-voices.json
+storage/custom-voices.json
 
 # Test and temporary audio files in root
 test-*.mp3

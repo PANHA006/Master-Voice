@@ -87,26 +87,62 @@ const VoiceChanger = (() => {
         if (!elements.presetSelect) return;
         elements.presetSelect.innerHTML = '';
 
-        const categoryNames = {
-            'Cloned': '✨ សំឡេងផ្ទាល់ខ្លួន (Cloned Voices)',
-            'Recap': '🎬 សម្រាយរឿង (Movie & Story Recap)',
-            'Education': '📚 វីដេអូអប់រំ & មេរៀន (Education & E-learning)',
-            'Character': '🎭 សម្លេងតួអង្គ (Character & Roleplay)',
-            'Kids': '👶 សម្លេងក្មេង (Kids & Animation)',
-            'General': '🇰🇭 សំឡេងទូទៅ (General Khmer Neural)',
-            'Storytelling': '🎙️ និទានរឿង & Podcast (Storytelling)',
-            'Documentary': '🎥 ភាពយន្តឯកសារ (Documentary)',
-            'News': '📺 ព័ត៌មាន (News & Formal)',
-            'Entertainment': '⚡ កម្សាន្ត & ពាណិជ្ជកម្ម (Entertainment)'
-        };
-
         const kmVoices = voicesData.km || [];
         const enVoices = voicesData.en || [];
+        const allVoices = [...kmVoices, ...enVoices];
 
-        // Khmer Groups
+        // Filter: only show voices that the user has added to use / favorited / cloned / default
+        const activeVoices = allVoices.filter(v => {
+            if (typeof isVoiceActiveInTTS === 'function') {
+                return isVoiceActiveInTTS(v.id);
+            }
+            return true;
+        });
+
+        const voicesToShow = activeVoices.length > 0 ? activeVoices : allVoices.slice(0, 4);
+
+        const categoryNames = {
+            'Custom': '🎛️ សំឡេងកែច្នៃផ្ទាល់ខ្លួន (Custom AI Models)',
+            'Cloned': '✨ សំឡេងផ្ទាល់ខ្លួន (Cloned Voices)',
+            'Business': '💼 អាជីវកម្ម & ទីផ្សារ (Business & Finance)',
+            'News': '📰 ព័ត៌មាន & កីឡា (News & Sports)',
+            'Health': '🏥 សុខភាព & វេជ្ជសាស្ត្រ (Health & Medical)',
+            'Travel': '✈️ ទេសចរណ៍ & Vlogs (Travel & Culture)',
+            'Food': '🍲 ម្ហូបអាហារ & ចុងភៅ (Culinary & Food)',
+            'Recap': '🎬 សម្រាយរឿង (Movie & Story Recap)',
+            'Character': '🎭 សម្លេងតួអង្គ (Character & Roleplay)',
+            'Kids': '👶 សម្លេងក្មេង (Kids & Animation)',
+            'General': '🇰🇭 សំឡេងគោលស្តង់ដារ (Standard Core Voices)',
+            'Education': '📚 វីដេអូអប់រំ & មេរៀន (Education & E-learning)',
+            'Documentary': '🎥 ភាពយន្តឯកសារ (Documentary)',
+            'Storytelling': '🎙️ និទានរឿង & ASMR (Storytelling)',
+            'Entertainment': '⚡ ហ្គេម & AI Tech (Entertainment)',
+            'English': '🇺🇸 English Models',
+            'International': '🌏 International Models'
+        };
+
+        const favIds = (typeof getFavoriteVoiceIds === 'function') ? getFavoriteVoiceIds() : [];
+        const favoriteVoices = voicesToShow.filter(v => favIds.includes(v.id));
+        const nonFavVoices = voicesToShow.filter(v => !favIds.includes(v.id));
+
+        // 1. Render Favorites Group at the top
+        if (favoriteVoices.length > 0) {
+            const favGroup = document.createElement('optgroup');
+            favGroup.label = '⭐ សំឡេងពេញចិត្ត (Favorites)';
+            favoriteVoices.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = `⭐ ${v.name}`;
+                option.classList.add('font-bold', 'text-amber-400');
+                favGroup.appendChild(option);
+            });
+            elements.presetSelect.appendChild(favGroup);
+        }
+
+        // 2. Render other Added / Active Voices grouped by category
         const groups = {};
-        kmVoices.forEach((v) => {
-            const cat = v.isCloned ? 'Cloned' : (v.category || 'General');
+        nonFavVoices.forEach((v) => {
+            const cat = v.isCustom ? 'Custom' : (v.isCloned ? 'Cloned' : (v.category || (v.lang === 'en' ? 'English' : 'General')));
             if (!groups[cat]) groups[cat] = [];
             groups[cat].push(v);
         });
@@ -119,29 +155,16 @@ const VoiceChanger = (() => {
                 const option = document.createElement('option');
                 option.value = v.id;
                 option.textContent = v.name;
-                if (v.id === 'km-recap-cinema') {
-                    option.selected = true;
+                if (v.isCustom) {
+                    option.classList.add('font-bold', 'text-fuchsia-400');
+                } else if (v.isCloned) {
+                    option.classList.add('font-semibold', 'text-cyan-400');
                 }
                 optGroup.appendChild(option);
             });
 
             elements.presetSelect.appendChild(optGroup);
         });
-
-        // English Group
-        if (enVoices.length > 0) {
-            const enOptGroup = document.createElement('optgroup');
-            enOptGroup.label = '🇺🇸 សំឡេងអង់គ្លេស (English Neural Voices)';
-
-            enVoices.forEach((v) => {
-                const option = document.createElement('option');
-                option.value = v.id;
-                option.textContent = v.name;
-                enOptGroup.appendChild(option);
-            });
-
-            elements.presetSelect.appendChild(enOptGroup);
-        }
     }
 
     function formatTime(seconds) {
@@ -152,6 +175,21 @@ const VoiceChanger = (() => {
     }
 
     function setupEventListeners() {
+        // Listen for favorite and active voice changes from Test Voice Studio
+        window.addEventListener('voxsync:favoritesChanged', () => {
+            const currentSelected = elements.presetSelect ? elements.presetSelect.value : null;
+            loadVoiceModels().then(() => {
+                if (currentSelected && elements.presetSelect) elements.presetSelect.value = currentSelected;
+            });
+        });
+
+        window.addEventListener('voxsync:activeVoicesChanged', () => {
+            const currentSelected = elements.presetSelect ? elements.presetSelect.value : null;
+            loadVoiceModels().then(() => {
+                if (currentSelected && elements.presetSelect) elements.presetSelect.value = currentSelected;
+            });
+        });
+
         // Upload Drag & Drop
         if (elements.dropZone && elements.fileInput) {
             elements.dropZone.addEventListener('click', () => elements.fileInput.click());

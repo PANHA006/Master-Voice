@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
+const ffmpeg = require('ffmpeg-static');
 const config = require('../config/config');
 const { splitScriptLines, formatTime } = require('../utils/timestamp.util');
 const { ensureDir } = require('../utils/audio.util');
@@ -17,22 +18,77 @@ const KHMER_VOICE_PROFILES = {
     'km-edu-documentary-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -18, pitch: '-10Hz' }, // ធម្មជាតិ វិទ្យាសាស្ត្រ & ភូមិសាស្ត្រ (Nature & Geo Explainer)
     'km-edu-mindfulness': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -24, pitch: '-16Hz' },   // សតិអារម្មណ៍ & សុខភាពផ្លូវចិត្ត (Mindfulness & Mental Health)
 
+    // 💼 អាជីវកម្ម, ទីផ្សារ & ហិរញ្ញវត្ថុ (Business, Finance & Commercial Series)
+    'km-biz-entrepreneur': { baseVoice: 'km-KH-PisethNeural', rateOffset: -12, pitch: '-4Hz' },     // អ្នកជំនួញ & CEO (Confident Entrepreneur & Business Pitch)
+    'km-biz-financial': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -15, pitch: '+4Hz' },       // ហិរញ្ញវត្ថុ & វិនិយោគ (Financial Analyst & Banking)
+    'km-biz-advertisement': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -6, pitch: '+20Hz' },    // ផ្សាយពាណិជ្ជកម្មទំនើប (Trendy Product Commercial)
+
+    // 📰 ព័ត៌មាន & ព្រឹត្តិការណ៍ (News, Broadcast & Politics Series)
+    'km-news-anchor-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -14, pitch: '-8Hz' },        // ពិធីករព័ត៌មានទូរទស្សន៍បុរស (Prime Time TV News Anchor)
+    'km-news-reporter-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -10, pitch: '+6Hz' },     // អ្នកយកព័ត៌មានបន្ទាន់ស្ត្រី (Breaking News Field Reporter)
+    'km-news-sports': { baseVoice: 'km-KH-PisethNeural', rateOffset: -4, pitch: '+14Hz' },          // អ្នកអត្ថាធិប្បាយកីឡា & បាល់ទាត់ (High Energy Sports Commentator)
+
     // 🎬 សម្រាយរឿង (Recap & Storytelling Series)
     'km-recap-cinema': { baseVoice: 'km-KH-PisethNeural', rateOffset: -12, pitch: '-18Hz' },       // Movie Recap Pro (ភាពយន្ត)
     'km-recap-drama': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -10, pitch: '-8Hz' },        // Drama & Series Recap (រឿងភាគ)
     'km-recap-suspense': { baseVoice: 'km-KH-PisethNeural', rateOffset: -18, pitch: '-32Hz' },     // Suspense / Horror Recap (ភ័យរន្ធត់ & អាថ៌កំបាំង)
 
+    // 🎧 សៀវភៅសំឡេង, ASMR & Podcast (Audiobook & Calming Audio Series)
+    'km-audiobook-fantasy': { baseVoice: 'km-KH-PisethNeural', rateOffset: -24, pitch: '-22Hz' },  // និទានរឿងទេវកថា & រឿងព្រេងបុរាណ (Fantasy & Epic Legends)
+    'km-radio-latenight': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -22, pitch: '-14Hz' },    // រាត្រីស្ងប់ស្ងាត់ Radio Host (Soothing Late Night Show)
+    'km-asmr-whisper': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -26, pitch: '-25Hz' },       // សំឡេងខ្សឹបស្ងប់អារម្មណ៍ (Gentle ASMR & Sleep Whisper)
+
+    // 🎮 ហ្គេម & បច្ចេកវិទ្យា (Gaming & Tech Series)
+    'km-game-streamer': { baseVoice: 'km-KH-PisethNeural', rateOffset: -6, pitch: '+18Hz' },        // ម៉ាការ៉ា (Live Game Streamer)
+    'km-tech-ai-bot': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -10, pitch: '+40Hz' },        // មេកា-AI (Futuristic Robot AI Assistant)
+    'km-tech-it': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '+2Hz' },               // កុសល (IT Engineer & Programmer)
+    'km-radio-dj': { baseVoice: 'km-KH-PisethNeural', rateOffset: -8, pitch: '+12Hz' },              // សំនៀង (Radio FM & DJ Host)
+    'km-story-kannika': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -20, pitch: '-6Hz' },       // កន្និកា (Audiobook & Novel Narrator)
+    'km-mindful-dharma': { baseVoice: 'km-KH-PisethNeural', rateOffset: -28, pitch: '-18Hz' },      // ធម្មរតន៍ (Spiritual Meditation & Calm)
+    'km-event-mc': { baseVoice: 'km-KH-PisethNeural', rateOffset: -6, pitch: '+22Hz' },              // សីហា (High Energy Event Host)
+
     // 🎭 សម្លេងតួអង្គ (Character & Roleplay Series)
-    'km-char-elder-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -26, pitch: '-42Hz' },       // តួអង្គតាចាស់ / លោកតា (Elderly Grandfather)
-    'km-char-elder-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -24, pitch: '-30Hz' },      // តួអង្គយាយចាស់ / លោកយាយ (Elderly Grandmother)
-    'km-char-villain': { baseVoice: 'km-KH-PisethNeural', rateOffset: -20, pitch: '-50Hz' },       // តួអង្គកាច / មេចោរ / បិសាច (Villain & Monster)
-    'km-char-hero': { baseVoice: 'km-KH-PisethNeural', rateOffset: -10, pitch: '-6Hz' },           // តួអង្គវីរបុរស / តួឯកប្រុស (Brave Hero / Anime)
-    'km-char-heroine': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+32Hz' },        // តួអង្គនារីក្លាហាន / តួឯកស្រី (Sweet Heroine / Princess)
+    'km-char-elder-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -26, pitch: '-42Hz' },       // តាសុវណ្ណ / លោកតា (Elderly Grandfather)
+    'km-char-elder-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -24, pitch: '-30Hz' },      // យាយម៉ៅ / លោកយាយ (Elderly Grandmother)
+    'km-char-villain': { baseVoice: 'km-KH-PisethNeural', rateOffset: -20, pitch: '-50Hz' },       // ក្រុងរាពណ៍ / មេចោរ / បិសាច (Villain & Monster)
+    'km-char-hero': { baseVoice: 'km-KH-PisethNeural', rateOffset: -10, pitch: '-6Hz' },           // កម្ពុជបុត្រ / តួឯកប្រុស (Brave Hero / Anime)
+    'km-char-heroine': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+32Hz' },        // ទេពអប្សរ / តួឯកស្រី (Sweet Heroine / Princess)
+    'km-char-detective': { baseVoice: 'km-KH-PisethNeural', rateOffset: -22, pitch: '-28Hz' },     // ស៊ើបការណ៍ (Noir Detective)
+    'km-char-queen': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -18, pitch: '-6Hz' },          // សុវណ្ណរាជនី (Royal Majesty Queen)
+    'km-char-ghost': { baseVoice: 'km-KH-PisethNeural', rateOffset: -30, pitch: '-48Hz' },          // វិញ្ញាណក្ខន្ធ (Creepy Ghost & Horror)
+
+    // 🏥 សុខភាព & វេជ្ជសាស្ត្រ (Health, Medical & Wellness Series)
+    'km-med-doctor-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -18, pitch: '-4Hz' },         // វេជ្ជបណ្ឌិត សុភា (Dr. Sothea)
+    'km-med-nurse-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -16, pitch: '+6Hz' },          // គិលានុបដ្ឋាយិកា ម៉ាលី (Nurse Maly)
+    'km-med-nutrition': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -14, pitch: '+12Hz' },       // អាហារូបត្ថម្ភ កុលាប (Nutritionist Kolab)
+
+    // ✈️ ទេសចរណ៍ & វប្បធម៌ (Tourism, Culture & Travel Vlogs)
+    'km-travel-guide-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -10, pitch: '+8Hz' },        // មគ្គុទ្ទេសក៍ សំអាត (Tour Guide Sam-At)
+    'km-travel-vlogger-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -6, pitch: '+24Hz' },      // Vlogger នីកា (Travel Vlogger Nika)
+
+    // 🍲 ម្ហូបអាហារ & ចុងភៅ (Culinary & Cooking Series)
+    'km-food-chef-m': { baseVoice: 'km-KH-PisethNeural', rateOffset: -12, pitch: '+2Hz' },           // ចុងភៅ ហេង (Chef Heng)
+    'km-food-reviewer-f': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -8, pitch: '+28Hz' },      // អ្នកភ្លក្ស ស្រីពៅ (Food Reviewer Sreypov)
+
+    // 🚗 យានយន្ត & Gadget Review (Auto & Tech Reviews)
+    'km-tech-automotive': { baseVoice: 'km-KH-PisethNeural', rateOffset: -10, pitch: '-6Hz' },        // អ្នកវិភាគរថយន្ត វណ្ណា (Car Reviewer Vanna)
+    'km-tech-gadget': { baseVoice: 'km-KH-PisethNeural', rateOffset: -8, pitch: '+10Hz' },           // អ្នក Review បញ្ញា (Gadget Host Panha)
+
+    // 🎭 សំឡេងតួអង្គប្រពៃណី & ទេវកថាបុរាណ (Classical Epic & Mythological Series)
+    'km-char-king': { baseVoice: 'km-KH-PisethNeural', rateOffset: -22, pitch: '-36Hz' },           // ព្រះបាទជ័យវរ្ម័ន (King Jayavarman)
+    'km-char-general-warrior': { baseVoice: 'km-KH-PisethNeural', rateOffset: -12, pitch: '-24Hz' }, // មេទ័ព ពិជ័យ (General Pichai)
+    'km-char-sorcerer': { baseVoice: 'km-KH-PisethNeural', rateOffset: -26, pitch: '-38Hz' },        // គ្រូអាគម មុនីឥសី (Moni Esei)
+    'km-char-ogre': { baseVoice: 'km-KH-PisethNeural', rateOffset: -24, pitch: '-55Hz' },            // យក្សពិភេក (Yak Piphek)
+    'km-char-princess-fairy': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -14, pitch: '+38Hz' }, // ព្រះនាង កេសរបុប្ផា (Princess Kesar Bopha)
+
+    // ☕ ជីវិត & ការលើកទឹកចិត្ត (Lifestyle & Soul Talk)
+    'km-lifestyle-coffee': { baseVoice: 'km-KH-SreymomNeural', rateOffset: -16, pitch: '+0Hz' },     // កាហ្វេពេលព្រឹក សុជាតា (Morning Coffee Socheata)
+    'km-lifestyle-monk': { baseVoice: 'km-KH-PisethNeural', rateOffset: -30, pitch: '-14Hz' },       // ធម្មកថិក (Dhamma Preacher)
 
     // 👶 សម្លេងក្មេង (Kids & Animation Series)
-    'km-child-boy': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +6, pitch: '+68Hz' },          // សម្លេងកុមារា / ក្មេងប្រុស (Little Boy)
-    'km-child-girl': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +8, pitch: '+92Hz' },         // សម្លេងកុមារី / ក្មេងស្រី (Little Girl)
-    'km-child-cartoon': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +12, pitch: '+120Hz' },     // សម្លេងកូនក្មេងតូច / គំនូរជីវចល (Cute Baby & Cartoon)
+    'km-child-boy': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +6, pitch: '+68Hz' },          // កុមារា ណាណូ (Little Boy Nano)
+    'km-child-girl': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +8, pitch: '+92Hz' },         // កុមារី មីមី (Little Girl Mimi)
+    'km-child-cartoon': { baseVoice: 'km-KH-SreymomNeural', rateOffset: +12, pitch: '+120Hz' },     // អាទីតូច (Cute Baby & Cartoon)
 
     // 👨 Piseth Series (សំឡេងបុរសទូទៅ)
     'km-KH-PisethNeural': { baseVoice: 'km-KH-PisethNeural', rateOffset: -15, pitch: '+0Hz' },
@@ -51,23 +107,32 @@ const KHMER_VOICE_PROFILES = {
 
 function runEdgeTTS({ text, voice, rateStr, pitchStr = '+0Hz', outputPath, vttPath }) {
     return new Promise((resolve, reject) => {
+        const tempTextPath = path.join(config.outputsDir, `temp-script-${Date.now()}-${Math.round(Math.random() * 1e6)}.txt`);
+        fs.writeFileSync(tempTextPath, text, 'utf-8');
+
         const args = [
             '--voice', voice,
             `--rate=${rateStr}`,
             `--pitch=${pitchStr}`,
-            '--text', text,
+            '--file', tempTextPath,
             '--write-media', outputPath,
             '--write-subtitles', vttPath
         ];
 
+        const cleanupTemp = () => {
+            try { if (fs.existsSync(tempTextPath)) fs.unlinkSync(tempTextPath); } catch (_) {}
+        };
+
         execFile('edge-tts', args, { windowsHide: true }, (err, stdout, stderr) => {
             if (!err) {
+                cleanupTemp();
                 return resolve();
             }
 
             // Fallback: Run via python -m edge_tts
             const pythonArgs = ['-m', 'edge_tts', ...args];
             execFile('python', pythonArgs, { windowsHide: true }, (pyErr, pyStdout, pyStderr) => {
+                cleanupTemp();
                 if (pyErr) {
                     return reject(new Error(pyStderr || stderr || pyErr.message));
                 }
@@ -196,6 +261,26 @@ class TTSService {
             }
         }
 
+        // Handle Custom AI Tuned Voice selection seamlessly
+        if (selectedVoice && selectedVoice.startsWith('custom-')) {
+            const customVoice = VoiceManager.getCustomVoices().find(v => v.id === selectedVoice);
+            if (customVoice && customVoice.config) {
+                return await this.synthesizeCustomVoice({
+                    text,
+                    baseVoice: customVoice.config.baseVoice || 'km-KH-PisethNeural',
+                    lang: customVoice.lang || targetLang,
+                    rate: speedRate,
+                    pitch: customVoice.config.pitch || 0,
+                    formant: customVoice.config.formant || 1.0,
+                    bass: customVoice.config.bass || 0,
+                    mid: customVoice.config.mid || 0,
+                    treble: customVoice.config.treble || 0,
+                    compression: customVoice.config.compression || 'off',
+                    reverb: customVoice.config.reverb || 'off'
+                });
+            }
+        }
+
         // Resolve specialized voice profile (Education, Documentary, Storyteller, Entertainment)
         const profile = KHMER_VOICE_PROFILES[selectedVoice];
         let baseVoice = profile ? profile.baseVoice : selectedVoice;
@@ -315,6 +400,144 @@ class TTSService {
             console.error('Neural TTS synthesis failed:', edgeErr.message);
             throw new Error(`Neural TTS synthesis failed: ${edgeErr.message}`);
         }
+    }
+
+    /**
+     * Synthesize Custom Acoustic Tuned AI Voice Model with Edge TTS + FFmpeg DSP Chain
+     */
+    static async synthesizeCustomVoice({
+        text,
+        baseVoice = 'km-KH-PisethNeural',
+        lang = 'km',
+        rate = 1.0,
+        pitch = 0,
+        formant = 1.0,
+        bass = 0,
+        mid = 0,
+        treble = 0,
+        compression = 'off',
+        reverb = 'off'
+    }) {
+        const cleanLines = splitScriptLines(text);
+        if (cleanLines.length === 0) {
+            throw new Error('Script text is empty or invalid.');
+        }
+
+        ensureDir(config.outputsDir);
+        const tempBaseName = `custom-raw-${Date.now()}-${Math.round(Math.random() * 1e6)}.mp3`;
+        const tempBasePath = path.join(config.outputsDir, tempBaseName);
+        const vttPath = path.join(config.outputsDir, `custom-${Date.now()}-${Math.round(Math.random() * 1e6)}.vtt`);
+        const finalFileName = `custom-${Date.now()}-${Math.round(Math.random() * 1e6)}.mp3`;
+        const finalOutputPath = path.join(config.outputsDir, finalFileName);
+
+        const speedRate = Math.max(0.5, Math.min(2.5, Number(rate) || 1.0));
+        let rateOffset = baseVoice.startsWith('km-') ? -15 : 0;
+        let finalRatePct = Math.round((speedRate - 1.0) * 100) + rateOffset;
+        const rateStr = `${finalRatePct >= 0 ? '+' : ''}${finalRatePct}%`;
+        const pitchVal = Number(pitch) || 0;
+        const pitchStr = `${pitchVal >= 0 ? '+' : ''}${pitchVal}Hz`;
+
+        // 1. Synthesize base audio with Edge-TTS
+        await runEdgeTTS({
+            text: cleanLines.join('\n'),
+            voice: baseVoice,
+            rateStr,
+            pitchStr,
+            outputPath: tempBasePath,
+            vttPath
+        });
+
+        let vttContent = '';
+        if (fs.existsSync(vttPath)) {
+            vttContent = fs.readFileSync(vttPath, 'utf-8');
+            try { fs.unlinkSync(vttPath); } catch (_) {}
+        }
+
+        // 2. Build DSP Filter Graph
+        const filters = [];
+        const bassVal = Number(bass) || 0;
+        const midVal = Number(mid) || 0;
+        const trebleVal = Number(treble) || 0;
+        const formantVal = Number(formant) || 1.0;
+
+        // 3-Band Studio EQ
+        if (bassVal !== 0) {
+            filters.push(`equalizer=f=150:width_type=q:w=1.0:g=${bassVal}`);
+        }
+        if (midVal !== 0) {
+            filters.push(`equalizer=f=2500:width_type=q:w=1.0:g=${midVal}`);
+        }
+        if (trebleVal !== 0) {
+            filters.push(`equalizer=f=8000:width_type=q:w=1.0:g=${trebleVal}`);
+        }
+
+        // Formant Shift Modulation
+        if (formantVal !== 1.0 && formantVal >= 0.5 && formantVal <= 2.2) {
+            const sampleRate = Math.round(24000 * formantVal);
+            const invRate = (1.0 / formantVal).toFixed(4);
+            filters.push(`asetrate=${sampleRate},atempo=${invRate}`);
+        }
+
+        // Dynamic Compression
+        if (compression === 'light') {
+            filters.push('acompressor=threshold=-12dB:ratio=2:attack=20:release=200');
+        } else if (compression === 'medium') {
+            filters.push('acompressor=threshold=-16dB:ratio=3.5:attack=15:release=200');
+        } else if (compression === 'radio' || compression === 'strong') {
+            filters.push('acompressor=threshold=-20dB:ratio=5:attack=10:release=150,volume=1.35');
+        }
+
+        // Reverb / Ambience
+        if (reverb === 'booth') {
+            filters.push('aecho=0.8:0.7:20:0.25');
+        } else if (reverb === 'room') {
+            filters.push('aecho=0.8:0.8:35:0.35');
+        } else if (reverb === 'hall') {
+            filters.push('aecho=0.8:0.85:60:0.45');
+        }
+
+        // 3. Apply FFmpeg DSP or move file
+        if (filters.length > 0) {
+            await new Promise((resolve, reject) => {
+                execFile(ffmpeg, [
+                    '-y',
+                    '-i', path.resolve(tempBasePath),
+                    '-af', filters.join(','),
+                    '-ar', '24000',
+                    '-b:a', '128k',
+                    path.resolve(finalOutputPath)
+                ], (err) => {
+                    try { fs.unlinkSync(tempBasePath); } catch (_) {}
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        } else {
+            if (fs.existsSync(tempBasePath)) {
+                fs.renameSync(tempBasePath, finalOutputPath);
+            }
+        }
+
+        const timestamps = parseVttTimestamps(vttContent, cleanLines);
+        const audioBuffer = fs.readFileSync(finalOutputPath);
+        const audioBase64 = audioBuffer.toString('base64');
+        const totalDuration = timestamps.length > 0
+            ? Math.round((timestamps[timestamps.length - 1].seconds + timestamps[timestamps.length - 1].scaledDuration) * 10) / 10
+            : Math.round((audioBuffer.length / 6000) * 10) / 10;
+
+        return {
+            success: true,
+            audioUrl: `/storage/outputs/${finalFileName}`,
+            audioDataUri: `data:audio/mp3;base64,${audioBase64}`,
+            fileName: finalFileName,
+            duration: Math.max(1, totalDuration),
+            voice: baseVoice,
+            lang,
+            rate: speedRate,
+            rawLines: timestamps,
+            timestamps,
+            formattedText: timestamps.map(t => t.formattedLine).join('\n')
+        };
     }
 }
 

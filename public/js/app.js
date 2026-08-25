@@ -5,12 +5,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Cache UI navigation elements
     const tabTtsBtn = document.getElementById('tabTtsBtn');
+    const tabTestVoiceBtn = document.getElementById('tabTestVoiceBtn');
     const tabSttBtn = document.getElementById('tabSttBtn');
     const tabCloneBtn = document.getElementById('tabCloneBtn');
     const tabVoiceChangerBtn = document.getElementById('tabVoiceChangerBtn');
     const tabHistoryBtn = document.getElementById('tabHistoryBtn');
 
     const tabTts = document.getElementById('tabTts');
+    const tabTestVoice = document.getElementById('tabTestVoice');
     const tabStt = document.getElementById('tabStt');
     const tabClone = document.getElementById('tabClone');
     const tabVoiceChanger = document.getElementById('tabVoiceChanger');
@@ -41,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             section: tabTts,
             title: 'Text-to-Speech & Timestamp Synchronizer',
             badge: 'TTS Studio'
+        },
+        {
+            btn: tabTestVoiceBtn,
+            section: tabTestVoice,
+            title: 'Voice Models Library & Real-time Voice Tester (សាកល្បងម៉ូឌែលសំឡេងទាំងអស់)',
+            badge: 'Test Voice'
         },
         {
             btn: tabSttBtn,
@@ -90,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (tabTtsBtn && tabTts) tabTtsBtn.addEventListener('click', () => switchTab(tabTtsBtn, tabTts));
+    if (tabTestVoiceBtn && tabTestVoice) tabTestVoiceBtn.addEventListener('click', () => switchTab(tabTestVoiceBtn, tabTestVoice));
     if (tabSttBtn && tabStt) tabSttBtn.addEventListener('click', () => switchTab(tabSttBtn, tabStt));
     if (tabCloneBtn && tabClone) tabCloneBtn.addEventListener('click', () => switchTab(tabCloneBtn, tabClone));
     if (tabVoiceChangerBtn && tabVoiceChanger) tabVoiceChangerBtn.addEventListener('click', () => switchTab(tabVoiceChangerBtn, tabVoiceChanger));
@@ -117,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize all modules
     if (typeof TTS !== 'undefined') TTS.init();
+    if (typeof TestVoice !== 'undefined') TestVoice.init();
     if (typeof STT !== 'undefined') STT.init();
     if (typeof CloneVoice !== 'undefined') CloneVoice.init();
     if (typeof History !== 'undefined') History.init();

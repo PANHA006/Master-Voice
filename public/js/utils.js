@@ -113,48 +113,110 @@ function escapeHtml(str) {
 }
 
 /**
- * Auto-format Khmer text to break into new lines on Khmer punctuation signs '។' and '៕'
- * Preserves '។ល។' (etc.) without breaking inside it.
+ * Smart Bilingual Auto-format to break into new lines on sentence-ending punctuation:
+ * - Khmer: '។', '៕'
+ * - English / Universal: '.', '!', '?'
+ *
+ * Intelligently preserves:
+ * - Abbreviations (e.g. Mr., Mrs., Dr., Prof., e.g., i.e., etc., vs., Inc., Ltd., Jan., Feb., etc.)
+ * - Numbers with decimals (e.g. 3.14, $9.99, 10.5, v1.0.0)
+ * - Numbered lists / bullets at beginning of line (e.g. 1. , 2. )
+ * - Ellipsis (...)
+ * - Domains, emails, and file extensions (e.g. example.com, test@mail.com, audio.mp3)
+ * - Khmer '។ល។'
+ * 
  * @param {string} text
  * @returns {string}
  */
-function formatKhmerPunctuationBreak(text) {
+function formatPunctuationAutoBreak(text) {
     if (!text || typeof text !== 'string') return text;
 
-    const tokenEtc = '___KH_ETC_TOKEN___';
-    let processed = text.replace(/។ល។/g, tokenEtc);
+    let processed = text;
 
-    // Break lines after '។' or '៕' if followed by space(s) or non-newline characters
+    // 1. Protect Khmer "។ល។"
+    const TOKEN_KH_ETC = '___KH_ETC_TOKEN___';
+    processed = processed.replace(/។ល។/g, TOKEN_KH_ETC);
+
+    // 2. Protect Ellipsis (...)
+    const TOKEN_ELLIPSIS = '___ELLIPSIS_TOKEN___';
+    processed = processed.replace(/\.{3,}/g, TOKEN_ELLIPSIS);
+
+    // 3. Protect decimals in numbers (e.g. 3.14, 10.5, $19.99, v1.0.0)
+    processed = processed.replace(/(\d)\.(\d)/g, '$1___DECIMAL_DOT___$2');
+
+    // 4. Protect common English abbreviations & titles
+    const ABBREVIATIONS = [
+        'Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Sr', 'Jr', 'St', 'vs', 'e\\.g', 'i\\.e', 'etc',
+        'approx', 'apt', 'dept', 'est', 'min', 'max', 'no', 'vol', 'U\\.S', 'U\\.K', 'U\\.N', 'E\\.U',
+        'A\\.M', 'P\\.M', 'a\\.m', 'p\\.m', 'Inc', 'Ltd', 'Co', 'Corp', 'Gen', 'Gov',
+        'Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'
+    ];
+    ABBREVIATIONS.forEach(abbr => {
+        const regex = new RegExp(`\\b(${abbr})\\.`, 'gi');
+        processed = processed.replace(regex, '$1___ABBR_DOT___');
+    });
+
+    // 5. Protect common domain extensions & URLs/emails & file extensions
+    processed = processed.replace(/(\w)\.(com|org|net|io|ai|gov|edu|kh|us|uk|de|fr|app|dev|me|info|biz)\b/gi, '$1___DOMAIN_DOT___$2');
+    processed = processed.replace(/(\w)\.(mp3|wav|mp4|png|jpg|jpeg|gif|json|js|html|css|txt|pdf|docx?|xlsx?|zip|rar)\b/gi, '$1___EXT_DOT___$2');
+
+    // 6. Protect numbered list prefixes at beginning of line (e.g. "1. ", "2. ")
+    processed = processed.replace(/(^|\n)(\s*\d+)\.\s+/g, '$1$2___LIST_DOT___ ');
+
+    // 7. Break lines after Khmer punctuation '។' and '៕'
     processed = processed.replace(/([។៕])[ \t]*(?!\r?\n|$)/g, '$1\n');
-
-    // Clean up any extra trailing whitespace before newlines
     processed = processed.replace(/([។៕])[ \t]+(?=\r?\n)/g, '$1');
 
+    // 8. Break lines after English/Universal punctuation '.', '!', '?' (if followed by space(s) or start of next sentence)
+    processed = processed.replace(/([.!?])[ \t]+(?!\r?\n|$)/g, '$1\n');
+
+    // Also handle punctuation followed immediately by quotes e.g. ." or !" or ?"
+    processed = processed.replace(/([.!?]["'”’])[ \t]+(?!\r?\n|$)/g, '$1\n');
+
+    // 9. Restore protected tokens
+    processed = processed.replace(/___DECIMAL_DOT___/g, '.');
+    processed = processed.replace(/___ABBR_DOT___/g, '.');
+    processed = processed.replace(/___DOMAIN_DOT___/g, '.');
+    processed = processed.replace(/___EXT_DOT___/g, '.');
+    processed = processed.replace(/___LIST_DOT___/g, '.');
+    processed = processed.replace(new RegExp(TOKEN_ELLIPSIS, 'g'), '...\n');
+    processed = processed.replace(/\.\.\.\n\n+/g, '...\n');
+
     // Handle '។ល។' followed by space/text
-    processed = processed.replace(new RegExp(`${tokenEtc}[ \\t]*(?!\\r?\\n|$)`, 'g'), '។ល។\n');
-    processed = processed.replace(new RegExp(tokenEtc, 'g'), '។ល។');
+    processed = processed.replace(new RegExp(`${TOKEN_KH_ETC}[ \\t]*(?!\\r?\\n|$)`, 'g'), '។ល។\n');
+    processed = processed.replace(new RegExp(TOKEN_KH_ETC, 'g'), '។ល។');
+
+    // 10. Clean up trailing spaces per line
+    processed = processed.split('\n').map(line => line.trimEnd()).join('\n');
 
     return processed;
 }
 
+// Backwards compatibility alias
+const formatKhmerPunctuationBreak = formatPunctuationAutoBreak;
+
 /**
- * Attach auto-break behavior to a textarea for Khmer punctuation '។' and '៕'
+ * Attach auto-break behavior to a textarea for Khmer and English punctuation:
+ * - Khmer: '។', '៕'
+ * - English / Universal: '.', '!', '?'
+ * 
  * Handles:
- * 1. Pasting text with '។'
- * 2. Typing '។' directly
+ * 1. Pasting text with punctuation
+ * 2. Typing punctuation directly
  * 3. IME composition completion
+ * 
  * @param {HTMLTextAreaElement} textarea
  * @param {Function} onUpdateCallback
  */
-function setupKhmerAutoBreak(textarea, onUpdateCallback) {
+function setupAutoBreak(textarea, onUpdateCallback) {
     if (!textarea) return;
 
     // 1. Intercept Paste
     textarea.addEventListener('paste', (e) => {
         const pasteText = (e.clipboardData || window.clipboardData)?.getData('text');
-        if (pasteText && (pasteText.includes('។') || pasteText.includes('៕'))) {
+        if (pasteText && (pasteText.includes('។') || pasteText.includes('៕') || pasteText.includes('.') || pasteText.includes('!') || pasteText.includes('?'))) {
             e.preventDefault();
-            const formatted = formatKhmerPunctuationBreak(pasteText);
+            const formatted = formatPunctuationAutoBreak(pasteText);
             
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
@@ -182,6 +244,7 @@ function setupKhmerAutoBreak(textarea, onUpdateCallback) {
     textarea.addEventListener('input', (e) => {
         if (e.isComposing) return;
 
+        // Auto-break on typing Khmer '។' or '៕'
         if (e.inputType === 'insertText' && (e.data === '។' || e.data === '៕')) {
             const start = textarea.selectionStart;
             const textVal = textarea.value;
@@ -189,7 +252,6 @@ function setupKhmerAutoBreak(textarea, onUpdateCallback) {
             const charBefore = textVal.slice(start - 1, start);
             const charAfter = textVal.slice(start, start + 1);
 
-            // If it's not the middle of "។ល", and next char isn't already a newline
             const twoBefore = textVal.slice(Math.max(0, start - 2), start);
             if (twoBefore !== '។' && (charBefore === '។' || charBefore === '៕') && charAfter !== '\n' && charAfter !== '\r') {
                 let inserted = false;
@@ -237,5 +299,97 @@ function setupKhmerAutoBreak(textarea, onUpdateCallback) {
             }
         }
     });
+}
+
+// Backwards compatibility alias
+const setupKhmerAutoBreak = setupAutoBreak;
+
+/* Favorite Voices Management */
+const FAVORITES_STORAGE_KEY = 'voxsync_favorite_voices';
+
+function getFavoriteVoiceIds() {
+    try {
+        const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function isFavoriteVoice(voiceId) {
+    if (!voiceId) return false;
+    return getFavoriteVoiceIds().includes(voiceId);
+}
+
+function toggleFavoriteVoice(voiceId) {
+    if (!voiceId) return false;
+    const list = getFavoriteVoiceIds();
+    const idx = list.indexOf(voiceId);
+    let isFav = false;
+    if (idx >= 0) {
+        list.splice(idx, 1);
+        isFav = false;
+    } else {
+        list.push(voiceId);
+        isFav = true;
+        // Automatically make favorite voice active in TTS
+        addVoiceToTTS(voiceId);
+    }
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('voxsync:favoritesChanged', { detail: { voiceId, isFav, list } }));
+    return isFav;
+}
+
+/* Active TTS Voices Management (Voices explicitly enabled by user in TTS dropdown) */
+const ACTIVE_TTS_STORAGE_KEY = 'voxsync_active_tts_voices';
+const DEFAULT_CORE_VOICES = ['km-KH-PisethNeural', 'km-KH-SreymomNeural', 'en-US-JennyNeural', 'en-US-GuyNeural'];
+
+function getActiveTTSVoiceIds() {
+    try {
+        const raw = localStorage.getItem(ACTIVE_TTS_STORAGE_KEY);
+        const stored = raw ? JSON.parse(raw) : null;
+        if (Array.isArray(stored)) {
+            return stored;
+        }
+        return [...DEFAULT_CORE_VOICES];
+    } catch (e) {
+        return [...DEFAULT_CORE_VOICES];
+    }
+}
+
+function isVoiceActiveInTTS(voiceId) {
+    if (!voiceId) return false;
+    if (voiceId.startsWith('cloned-') || voiceId.startsWith('custom-')) return true;
+    const active = getActiveTTSVoiceIds();
+    const favs = getFavoriteVoiceIds();
+    return active.includes(voiceId) || favs.includes(voiceId) || DEFAULT_CORE_VOICES.includes(voiceId);
+}
+
+function addVoiceToTTS(voiceId) {
+    if (!voiceId) return;
+    const list = getActiveTTSVoiceIds();
+    if (!list.includes(voiceId)) {
+        list.push(voiceId);
+        localStorage.setItem(ACTIVE_TTS_STORAGE_KEY, JSON.stringify(list));
+        window.dispatchEvent(new CustomEvent('voxsync:activeVoicesChanged', { detail: { voiceId, action: 'add', list } }));
+    }
+}
+
+function removeVoiceFromTTS(voiceId) {
+    if (!voiceId) return;
+    let list = getActiveTTSVoiceIds();
+    list = list.filter(id => id !== voiceId);
+    localStorage.setItem(ACTIVE_TTS_STORAGE_KEY, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('voxsync:activeVoicesChanged', { detail: { voiceId, action: 'remove', list } }));
+}
+
+function toggleVoiceInTTS(voiceId) {
+    if (isVoiceActiveInTTS(voiceId) && !DEFAULT_CORE_VOICES.includes(voiceId)) {
+        removeVoiceFromTTS(voiceId);
+        return false;
+    } else {
+        addVoiceToTTS(voiceId);
+        return true;
+    }
 }
 

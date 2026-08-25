@@ -152,18 +152,18 @@ const CloneVoice = (() => {
             }
         });
 
-        // Auto-break lines on Khmer punctuation '។' and '៕'
-        setupKhmerAutoBreak(elements.scriptInput);
+        // Smart Auto-break lines on Khmer (។, ៕) and English (., !, ?)
+        setupAutoBreak(elements.scriptInput);
 
         if (elements.autoBreakBtn) {
             elements.autoBreakBtn.addEventListener('click', () => {
                 const text = elements.scriptInput.value;
                 if (!text || !text.trim()) {
-                    showToast('Please enter or paste text first', 'warning');
+                    showToast('សូមបញ្ចូល ឬបិទភ្ជាប់អត្ថបទជាមុនសិន', 'warning');
                     return;
                 }
-                elements.scriptInput.value = formatKhmerPunctuationBreak(text);
-                showToast('បានបំបែកបន្ទាត់តាមសញ្ញា (។) រួចរាល់!', 'success');
+                elements.scriptInput.value = formatPunctuationAutoBreak(text);
+                showToast('✓ បានបំបែកបន្ទាត់តាមសញ្ញាខណ្ឌ (។ និង .) រួចរាល់!', 'success');
             });
         }
 

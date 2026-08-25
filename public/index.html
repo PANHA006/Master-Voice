@@ -105,7 +105,23 @@
                     </div>
                 </button>
 
-                <!-- Button 2: Voice-to-Text (STT) -->
+                <!-- Button 2: Test Voice Studio (All Voice Models) -->
+                <button id="tabTestVoiceBtn"
+                    class="w-full p-3.5 rounded-2xl font-semibold text-xs transition-all flex items-center gap-3.5 nav-item-inactive text-left group">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-slate-800/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5 nav-icon text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-bold truncate">Test Voice Studio</div>
+                        <div class="text-[11px] text-slate-400 font-normal truncate">សាកល្បងម៉ូឌែលសំឡេងទាំងអស់ (30+)</div>
+                    </div>
+                </button>
+
+                <!-- Button 3: Voice-to-Text (STT) -->
                 <button id="tabSttBtn"
                     class="w-full p-3.5 rounded-2xl font-semibold text-xs transition-all flex items-center gap-3.5 nav-item-inactive text-left group">
                     <div
@@ -311,7 +327,12 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1.5">Voice Model</label>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-xs font-medium text-slate-400">Voice Model</label>
+                                    <button type="button" onclick="document.getElementById('tabTestVoiceBtn').click()" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors bg-indigo-950/60 px-2 py-0.5 rounded-lg border border-indigo-800/40 hover:bg-indigo-900/60" title="ចូលទៅកាន់ Test Voice Studio ដើម្បីជ្រើសរើសសំឡេងបន្ថែម">
+                                        <span>➕ រុករក & បន្ថែមសំឡេង (50+)</span>
+                                    </button>
+                                </div>
                                 <div class="relative">
                                     <select id="ttsVoiceSelect"
                                         class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 appearance-none">
@@ -335,12 +356,12 @@
                                         Content</label>
                                     <button type="button" id="ttsAutoBreakBtn"
                                         class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/60 hover:bg-indigo-900/80 text-cyan-400 hover:text-cyan-300 border border-indigo-800/50 transition-all flex items-center gap-1 cursor-pointer"
-                                        title="ចុចដើម្បីបំបែកបន្ទាត់តាមសញ្ញា (។)">
+                                        title="ចុចដើម្បីបំបែកបន្ទាត់តាមសញ្ញាខណ្ឌ (។ និង . / ! / ?)">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                         </svg>
-                                        <span>Auto Break (។)</span>
+                                        <span>Auto Break (។ / .)</span>
                                     </button>
                                 </div>
                                 <span id="ttsCharCount" class="text-[11px] text-slate-500 font-mono">0 characters</span>
@@ -486,6 +507,300 @@
                     </div>
 
                 </div>
+            </section>
+
+            <!-- ================= TAB: TEST VOICE STUDIO (ALL VOICE MODELS) ================= -->
+            <section id="tabTestVoice" class="flex flex-col gap-6 hidden transition-all duration-300 flex-1">
+
+                <!-- Top Control & Preset Text Panel -->
+                <div class="glass-card rounded-3xl p-6 lg:p-7 border border-slate-800/90 flex flex-col gap-5 shadow-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/95">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 ring-2 ring-white/10">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2.5">
+                                    <h3 class="font-extrabold text-lg text-white tracking-tight">Voice Models Library & Live Studio</h3>
+                                    <span id="tvVoiceCountBadge" class="px-3 py-0.5 rounded-full bg-emerald-950/90 border border-emerald-700/60 text-xs font-mono font-bold text-emerald-400 shadow-sm">Loading...</span>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-0.5">សាកល្បង និងស្តាប់សំឡេងម៉ូឌែលទាំងអស់ (30+ Models) ជាមួយអត្ថបទផ្ទាល់ខ្លួន និងការកែប្រែល្បឿន</p>
+                            </div>
+                        </div>
+
+                        <!-- Top Right Controls: Speed Slider & Refresh -->
+                        <div class="flex items-center gap-3 self-end md:self-auto">
+                            <div class="flex items-center gap-2.5 bg-slate-900/90 px-4 py-2 rounded-2xl border border-slate-800 shadow-inner">
+                                <span class="text-xs text-slate-400 font-semibold">Speed:</span>
+                                <input type="range" id="tvSpeedSlider" min="0.5" max="2.0" step="0.1" value="1.0" class="w-24 accent-emerald-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                                <span id="tvSpeedValue" class="text-xs font-mono font-extrabold text-emerald-400 min-w-[36px]">1.0x</span>
+                            </div>
+                            <button id="tvRefreshBtn" class="p-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all shadow-sm active:scale-95" title="Refresh Voice List">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Sample Text Input -->
+                    <div class="flex flex-col gap-2.5">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <label class="text-xs font-bold text-slate-200 flex items-center gap-2">
+                                <span class="text-indigo-400">📝</span>
+                                <span>អត្ថបទសម្រាប់សាកល្បងអាន (Custom Sample Text):</span>
+                            </label>
+                            <!-- Quick Presets -->
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[10px] text-slate-500 uppercase font-extrabold tracking-wider mr-1">Presets:</span>
+                                <button data-preset="km-edu" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-indigo-950 text-indigo-300 border border-slate-800 hover:border-indigo-700 text-xs font-medium transition-all shadow-sm">📚 អប់រំ</button>
+                                <button data-preset="km-biz" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-amber-950 text-amber-300 border border-slate-800 hover:border-amber-700 text-xs font-medium transition-all shadow-sm">💼 អាជីវកម្ម</button>
+                                <button data-preset="km-news" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-red-950 text-red-300 border border-slate-800 hover:border-red-700 text-xs font-medium transition-all shadow-sm">📰 ព័ត៌មាន</button>
+                                <button data-preset="km-health" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-teal-950 text-teal-300 border border-slate-800 hover:border-teal-700 text-xs font-medium transition-all shadow-sm">🏥 សុខភាព</button>
+                                <button data-preset="km-travel" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-sky-950 text-sky-300 border border-slate-800 hover:border-sky-700 text-xs font-medium transition-all shadow-sm">✈️ ទេសចរណ៍</button>
+                                <button data-preset="km-food" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-amber-950 text-amber-300 border border-slate-800 hover:border-amber-700 text-xs font-medium transition-all shadow-sm">🍲 ម្ហូបអាហារ</button>
+                                <button data-preset="km-recap" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-orange-950 text-orange-300 border border-slate-800 hover:border-orange-700 text-xs font-medium transition-all shadow-sm">🎬 សម្រាយរឿង</button>
+                                <button data-preset="km-char" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-purple-950 text-purple-300 border border-slate-800 hover:border-purple-700 text-xs font-medium transition-all shadow-sm">🎭 តួអង្គ</button>
+                                <button data-preset="km-kids" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-emerald-950 text-emerald-300 border border-slate-800 hover:border-emerald-700 text-xs font-medium transition-all shadow-sm">👶 កុមារ</button>
+                                <button data-preset="km-story" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-rose-950 text-rose-300 border border-slate-800 hover:border-rose-700 text-xs font-medium transition-all shadow-sm">📖 និទាន</button>
+                                <button data-preset="km-general" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-teal-950 text-teal-300 border border-slate-800 hover:border-teal-700 text-xs font-medium transition-all shadow-sm">🇰🇭 ទូទៅ</button>
+                                <button data-preset="en-general" class="tv-preset-btn px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-cyan-950 text-cyan-300 border border-slate-800 hover:border-cyan-700 text-xs font-medium transition-all shadow-sm">🇺🇸 English</button>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="tvSampleText" placeholder="វាយអត្ថបទរបស់អ្នកនៅទីនេះដើម្បីឱ្យម៉ូឌែលអានសាកល្បង (ឬទុកឱ្យនៅទទេ ដើម្បីប្រើអត្ថបទគំរូ)..." class="w-full bg-slate-950 border border-slate-800/90 focus:border-indigo-500 rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none transition-all pr-24 shadow-inner" />
+                            <span class="absolute right-3.5 top-3.5 text-[10px] uppercase font-bold text-slate-500 font-mono tracking-wider">Live Speech</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Voice Customizer & Acoustic Tuner Accordion Drawer -->
+                    <div class="border border-indigo-500/30 rounded-2xl bg-slate-950/70 p-4 lg:p-5 shadow-xl transition-all">
+                        <div class="flex items-center justify-between flex-wrap gap-3 cursor-pointer select-none" id="tvCustomStudioToggle">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="font-extrabold text-sm text-white flex items-center gap-2">
+                                            <span>🎛️ AI Voice Customizer & Acoustic Tuner</span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold border border-indigo-500/30">PRO DSP</span>
+                                        </h4>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400">បង្កើតម៉ូឌែលសំឡេង AI ផ្ទាល់ខ្លួន៖ TTS Base Model + Pitch + Formant + 3-Band EQ + Dynamics + Reverb</p>
+                                </div>
+                            </div>
+                            <button type="button" id="tvCustomStudioToggleBtn" class="px-3 py-1.5 rounded-xl bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 text-xs font-semibold border border-indigo-700/50 flex items-center gap-1.5 transition-all shadow-sm">
+                                <span id="tvCustomToggleText">✨ បើកផ្ទាំងកែច្នៃ (Custom Studio)</span>
+                                <svg id="tvCustomToggleIcon" class="w-4 h-4 transition-transform transform rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Collapsible Body -->
+                        <div id="tvCustomStudioBody" class="hidden flex-col gap-4 pt-5 mt-4 border-t border-slate-800/80">
+                            <!-- Preset Templates Row -->
+                            <div class="flex items-center justify-between flex-wrap gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                                <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                    <span>⚡ Quick Sound Presets:</span>
+                                </span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <button type="button" data-cpreset="radio" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-indigo-950 text-indigo-300 hover:text-indigo-200 border border-slate-700 text-xs font-medium transition-all">🎙️ Radio Host</button>
+                                    <button type="button" data-cpreset="cinema" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-orange-950 text-orange-300 hover:text-orange-200 border border-slate-700 text-xs font-medium transition-all">🎬 Cinema Deep</button>
+                                    <button type="button" data-cpreset="anime" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-pink-950 text-pink-300 hover:text-pink-200 border border-slate-700 text-xs font-medium transition-all">🧚 Sweet Anime</button>
+                                    <button type="button" data-cpreset="robot" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-cyan-950 text-cyan-300 hover:text-cyan-200 border border-slate-700 text-xs font-medium transition-all">🤖 Sci-Fi Robot</button>
+                                    <button type="button" data-cpreset="mindful" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-teal-950 text-teal-300 hover:text-teal-200 border border-slate-700 text-xs font-medium transition-all">🧘 Mindfulness</button>
+                                    <button type="button" data-cpreset="reset" class="tv-cpreset-btn px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-300 hover:text-rose-200 border border-slate-700 text-xs font-medium transition-all">🔄 Reset</button>
+                                </div>
+                            </div>
+
+                            <!-- Parameters Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <!-- 1. Base Model & Pitch -->
+                                <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-xl flex flex-col gap-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-xs font-bold text-slate-200">1. Base Neural Model</label>
+                                    </div>
+                                    <select id="custBaseVoice" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                                        <option value="km-KH-PisethNeural">🇰🇭 ពិសិដ្ឋ (Piseth - Male)</option>
+                                        <option value="km-KH-SreymomNeural">🇰🇭 ស្រីមុំ (Sreymom - Female)</option>
+                                        <option value="en-US-JennyNeural">🇺🇸 Jenny (English Female)</option>
+                                        <option value="en-US-GuyNeural">🇺🇸 Guy (English Male)</option>
+                                    </select>
+
+                                    <div class="space-y-1 pt-1">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-slate-400 font-medium">Pitch Shifter:</span>
+                                            <span id="custPitchVal" class="font-mono font-bold text-indigo-400">0 Hz</span>
+                                        </div>
+                                        <input type="range" id="custPitchSlider" min="-50" max="80" step="2" value="0" class="w-full accent-indigo-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                                        <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                                            <span>-50Hz (Deep)</span>
+                                            <span>0Hz</span>
+                                            <span>+80Hz (High)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Formant & Vocal Body -->
+                                <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-xl flex flex-col gap-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-xs font-bold text-slate-200">2. Formant & Vocal Body</label>
+                                        <span class="text-[10px] text-purple-400 font-mono font-bold">Vocal Tract</span>
+                                    </div>
+                                    
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-slate-400 font-medium">Formant Shifter:</span>
+                                            <span id="custFormantVal" class="font-mono font-bold text-purple-400">1.00x</span>
+                                        </div>
+                                        <input type="range" id="custFormantSlider" min="0.6" max="1.6" step="0.05" value="1.0" class="w-full accent-purple-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                                        <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                                            <span>0.6x (Heavy/Deep)</span>
+                                            <span>1.0x</span>
+                                            <span>1.6x (Narrow/Small)</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-1">
+                                        <p class="text-[10px] text-slate-400 leading-relaxed">កែប្រែទំហំបំពង់កដើម្បីផ្លាស់ប្តូរភេទ អាយុ និងទម្រង់តួអង្គ (Male, Female, Child, Elder)។</p>
+                                    </div>
+                                </div>
+
+                                <!-- 3. 3-Band Equalizer (EQ) -->
+                                <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-xl flex flex-col gap-2.5">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-xs font-bold text-slate-200">3. 3-Band Studio EQ</label>
+                                        <span class="text-[10px] text-emerald-400 font-mono font-bold">Acoustic EQ</span>
+                                    </div>
+
+                                    <!-- Bass -->
+                                    <div class="space-y-0.5">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Low/Bass (150Hz):</span>
+                                            <span id="custBassVal" class="font-mono font-bold text-emerald-400">0 dB</span>
+                                        </div>
+                                        <input type="range" id="custBassSlider" min="-12" max="12" step="1" value="0" class="w-full accent-emerald-400 cursor-pointer h-1 bg-slate-800 rounded-lg">
+                                    </div>
+
+                                    <!-- Mid -->
+                                    <div class="space-y-0.5">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">Mid Presence (2.5kHz):</span>
+                                            <span id="custMidVal" class="font-mono font-bold text-emerald-400">0 dB</span>
+                                        </div>
+                                        <input type="range" id="custMidSlider" min="-12" max="12" step="1" value="0" class="w-full accent-emerald-400 cursor-pointer h-1 bg-slate-800 rounded-lg">
+                                    </div>
+
+                                    <!-- Treble -->
+                                    <div class="space-y-0.5">
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-slate-400">High Air (8kHz):</span>
+                                            <span id="custTrebleVal" class="font-mono font-bold text-emerald-400">0 dB</span>
+                                        </div>
+                                        <input type="range" id="custTrebleSlider" min="-12" max="12" step="1" value="0" class="w-full accent-emerald-400 cursor-pointer h-1 bg-slate-800 rounded-lg">
+                                    </div>
+                                </div>
+
+                                <!-- 4. Dynamics & Studio Reverb -->
+                                <div class="bg-slate-900/60 border border-slate-800/80 p-3.5 rounded-xl flex flex-col gap-3">
+                                    <div class="flex items-center justify-between">
+                                        <label class="text-xs font-bold text-slate-200">4. Dynamics & Space</label>
+                                        <span class="text-[10px] text-cyan-400 font-mono font-bold">Studio FX</span>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] text-slate-400 block">Compressor (កម្រាស់សំឡេង):</label>
+                                        <select id="custCompressionSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                                            <option value="off" selected>Off (ស្តង់ដារ)</option>
+                                            <option value="light">Light (រលូនស្រាល)</option>
+                                            <option value="medium">Medium (កម្រាស់ស្មើល្អ)</option>
+                                            <option value="radio">Radio Punch (សំឡេងណែន & ខ្លាំង)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] text-slate-400 block">Reverb / Ambience (សភាពបន្ទប់):</label>
+                                        <select id="custReverbSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-500">
+                                            <option value="off" selected>Dry / Off (បន្ទប់ស្ងប់)</option>
+                                            <option value="booth">Studio Booth (បន្ទប់ថតវិជ្ជាជីវៈ)</option>
+                                            <option value="room">Podcast Room (បន្ទប់ជជែកកម្សាន្ត)</option>
+                                            <option value="hall">Concert Hall (សាលប្រជុំធំ)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Action Row: Name Input + Preview + Save -->
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-slate-800">
+                                <div class="flex-1 flex items-center gap-2">
+                                    <label class="text-xs font-bold text-slate-300 shrink-0">ឈ្មោះម៉ូឌែល:</label>
+                                    <input type="text" id="custModelName" placeholder="ឧ. សំឡេងផ្ទាល់ខ្លួនរបស់ខ្ញុំ (My Custom Voice Pro)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 shadow-inner" />
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" id="custPreviewBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/30 active:scale-95">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>🎧 Live Preview</span>
+                                    </button>
+                                    <button type="button" id="custSaveBtn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30 active:scale-95">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                        </svg>
+                                        <span>💾 រក្សាទុកម៉ូឌែល (Save Model)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Live Preview Audio Player Box -->
+                            <div id="custPreviewPlayerBox" class="hidden p-3.5 bg-slate-900/90 rounded-xl border border-indigo-500/40 flex items-center justify-between gap-3 animate-fadeIn">
+                                <div class="flex items-center gap-3">
+                                    <button type="button" id="custPlayPauseBtn" class="w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-600/30">
+                                        <svg id="custPlayIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                        </svg>
+                                    </button>
+                                    <div>
+                                        <span class="text-xs font-bold text-white block">Custom Voice Live Output</span>
+                                        <span id="custAudioTime" class="text-[10px] font-mono text-indigo-300">00:00 / 00:00</span>
+                                    </div>
+                                </div>
+                                <audio id="custAudioElement" class="hidden"></audio>
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30">Acoustic Render Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search & Category Filters Bar -->
+                    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5 pt-1">
+                        <!-- Search Box -->
+                        <div class="relative w-full lg:w-80 shrink-0">
+                            <input type="text" id="tvSearchInput" placeholder="ស្វែងរកតាមឈ្មោះសំឡេង (Search voice name or ID)..." class="w-full bg-slate-900/95 border border-slate-800/90 focus:border-indigo-500 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none transition-all shadow-sm" />
+                            <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        <!-- Category Filter Pills -->
+                        <div id="tvCategoryFilters" class="flex items-center gap-2 flex-wrap overflow-x-auto pb-1 lg:pb-0">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice Cards Grid -->
+                <div id="tvCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-16">
+                    <!-- Populated dynamically by test-voice.js -->
+                </div>
+
             </section>
 
             <!-- ================= TAB 2: VOICE TO TEXT (STT) ================= -->
@@ -851,8 +1166,8 @@
                                     <label for="cloneScriptInput" class="text-xs font-bold text-indigo-300">ជំហានទី ២: សាកល្បងសំយោគសំឡេង (Step 2: Test Script Synthesis)</label>
                                     <button type="button" id="cloneAutoBreakBtn"
                                         class="text-[10px] px-2 py-0.5 rounded-md bg-indigo-950/60 hover:bg-indigo-900/80 text-cyan-400 border border-indigo-800/50 transition-all flex items-center gap-1 cursor-pointer"
-                                        title="ចុចដើម្បីបំបែកបន្ទាត់តាមសញ្ញា (។)">
-                                        <span>Auto Break (។)</span>
+                                        title="ចុចដើម្បីបំបែកបន្ទាត់តាមសញ្ញាខណ្ឌ (។ និង . / ! / ?)">
+                                        <span>Auto Break (។ / .)</span>
                                     </button>
                                 </div>
                                 <button id="cloneLoadSampleBtn"
@@ -1117,14 +1432,17 @@
 
                         <!-- Step 2: Voice Morphing Configurations -->
                         <div class="flex flex-col gap-3.5 pt-2 border-t border-slate-800/80 shrink-0">
-                            <label class="block text-xs font-semibold text-slate-300">Step 2: ជ្រើសរើសម៉ូឌែលសម្លេង
-                                (Select Voice Model)</label>
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-semibold text-slate-300">Step 2: ជ្រើសរើសម៉ូឌែលសម្លេង (Select Voice Model)</label>
+                                <button type="button" onclick="document.getElementById('tabTestVoiceBtn').click()" class="text-[11px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 transition-colors bg-rose-950/60 px-2 py-0.5 rounded-lg border border-rose-800/40 hover:bg-rose-900/60" title="ចូលទៅកាន់ Test Voice Studio ដើម្បីជ្រើសរើសសំឡេងបន្ថែម">
+                                    <span>➕ រុករក & បន្ថែមសំឡេង (50+)</span>
+                                </button>
+                            </div>
 
                             <!-- Voice Models Dropdown -->
                             <div class="relative">
                                 <select id="vcPresetSelect"
                                     class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-rose-500 appearance-none font-sans">
-                                    <option value="km-recap-cinema" selected>🎬 សម្រាយរឿង - បែបភាពយន្ត (Movie Recap Pro - Piseth)</option>
                                 </select>
                                 <div
                                     class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
@@ -1539,6 +1857,7 @@
     <!-- Modular Frontend Application Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/tts.js"></script>
+    <script src="js/test-voice.js"></script>
     <script src="js/stt.js"></script>
     <script src="js/clone.js"></script>
     <script src="js/voice-changer.js"></script>
