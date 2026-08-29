@@ -9,9 +9,44 @@ class TTSController {
     static async getVoices(req, res, next) {
         try {
             const voices = TTSService.getAvailableVoices();
+            const preferences = VoiceManager.getPreferences();
             res.json({
                 success: true,
-                voices
+                voices,
+                preferences
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Get default voice preferences
+     * GET /api/tts/preferences
+     */
+    static async getPreferences(req, res, next) {
+        try {
+            const preferences = VoiceManager.getPreferences();
+            res.json({
+                success: true,
+                preferences
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    /**
+     * Save voice preferences
+     * POST /api/tts/preferences
+     */
+    static async savePreferences(req, res, next) {
+        try {
+            const { favorites, activeVoices } = req.body;
+            VoiceManager.savePreferences({ favorites, activeVoices });
+            res.json({
+                success: true,
+                message: 'Preferences saved successfully'
             });
         } catch (error) {
             next(error);

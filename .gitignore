@@ -47,12 +47,16 @@ pip-delete-this-directory.txt
 # ------------------------------------------
 storage/uploads/*
 !storage/uploads/.gitkeep
+!storage/uploads/sample-check.mp3
 storage/outputs/*
 !storage/outputs/.gitkeep
 storage/temp/
 storage/cache/
-storage/cloned-voices.json
-storage/custom-voices.json
+
+# Track voice model registries & preferences
+!storage/cloned-voices.json
+!storage/custom-voices.json
+!storage/voice-preferences.json
 
 # Test and temporary audio files in root
 test-*.mp3

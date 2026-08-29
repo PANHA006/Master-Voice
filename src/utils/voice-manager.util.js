@@ -5,8 +5,58 @@ const { ensureDir } = require('../utils/audio.util');
 
 const CLONED_VOICES_FILE = path.join(__dirname, '../../storage/cloned-voices.json');
 const CUSTOM_VOICES_FILE = path.join(__dirname, '../../storage/custom-voices.json');
+const PREFERENCES_FILE = path.join(__dirname, '../../storage/voice-preferences.json');
 
 class VoiceManager {
+    static getPreferences() {
+        try {
+            ensureDir(path.dirname(PREFERENCES_FILE));
+            if (fs.existsSync(PREFERENCES_FILE)) {
+                const data = fs.readFileSync(PREFERENCES_FILE, 'utf-8');
+                return JSON.parse(data) || { favorites: [], activeVoices: [] };
+            }
+        } catch (e) {
+            console.error('Error reading voice preferences:', e.message);
+        }
+        return {
+            favorites: [
+                "cloned-1787562721953",
+                "cloned-1787566066619",
+                "custom-1787646217612-2750",
+                "custom-1787646477696-1220",
+                "custom-1787646632200-8452"
+            ],
+            activeVoices: [
+                "cloned-1787562721953",
+                "cloned-1787566066619",
+                "cloned-1787973055454",
+                "custom-1787646217612-2750",
+                "custom-1787646477696-1220",
+                "custom-1787646632200-8452",
+                "custom-1787645811135-4009",
+                "km-KH-PisethNeural",
+                "km-KH-SreymomNeural",
+                "en-US-JennyNeural",
+                "en-US-GuyNeural"
+            ]
+        };
+    }
+
+    static savePreferences(prefs = {}) {
+        try {
+            ensureDir(path.dirname(PREFERENCES_FILE));
+            const existing = this.getPreferences();
+            const updated = {
+                favorites: Array.isArray(prefs.favorites) ? prefs.favorites : existing.favorites,
+                activeVoices: Array.isArray(prefs.activeVoices) ? prefs.activeVoices : existing.activeVoices
+            };
+            fs.writeFileSync(PREFERENCES_FILE, JSON.stringify(updated, null, 2), 'utf-8');
+            return true;
+        } catch (e) {
+            console.error('Error saving voice preferences:', e.message);
+            return false;
+        }
+    }
     static getClonedVoices() {
         try {
             ensureDir(path.dirname(CLONED_VOICES_FILE));

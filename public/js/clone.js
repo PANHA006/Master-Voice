@@ -102,6 +102,8 @@ const CloneVoice = (() => {
             copyAllBtn: document.getElementById('cloneCopyAllBtn'),
             downloadTxtBtn: document.getElementById('cloneDownloadTxtBtn'),
             autoBreakBtn: document.getElementById('cloneAutoBreakBtn'),
+            autoBreakToggle: document.getElementById('cloneAutoBreakToggle'),
+            autoBreakStatusText: document.getElementById('cloneAutoBreakStatusText'),
             manageVoicesBtn: document.getElementById('manageClonedVoicesBtn'),
             clonedVoicesModal: document.getElementById('clonedVoicesModal'),
             closeClonedVoicesBtn: document.getElementById('closeClonedVoicesBtn'),
@@ -152,8 +154,28 @@ const CloneVoice = (() => {
             }
         });
 
-        // Smart Auto-break lines on Khmer (។, ៕) and English (., !, ?)
-        setupAutoBreak(elements.scriptInput);
+        // Smart Auto-break lines on Khmer (។, ៕) and English (., !, ?) with user ON / OFF Toggle
+        let isAutoBreakEnabled = localStorage.getItem('voxsync_auto_break_enabled') === 'true';
+
+        if (elements.autoBreakToggle) {
+            elements.autoBreakToggle.checked = isAutoBreakEnabled;
+            if (elements.autoBreakStatusText) {
+                elements.autoBreakStatusText.textContent = isAutoBreakEnabled ? 'Auto-Break: ON' : 'Auto-Break: OFF';
+                elements.autoBreakStatusText.className = isAutoBreakEnabled ? 'text-[10px] font-semibold text-cyan-300' : 'text-[10px] font-medium text-slate-400';
+            }
+
+            elements.autoBreakToggle.addEventListener('change', (e) => {
+                isAutoBreakEnabled = e.target.checked;
+                localStorage.setItem('voxsync_auto_break_enabled', isAutoBreakEnabled ? 'true' : 'false');
+                if (elements.autoBreakStatusText) {
+                    elements.autoBreakStatusText.textContent = isAutoBreakEnabled ? 'Auto-Break: ON' : 'Auto-Break: OFF';
+                    elements.autoBreakStatusText.className = isAutoBreakEnabled ? 'text-[10px] font-semibold text-cyan-300' : 'text-[10px] font-medium text-slate-400';
+                }
+                showToast(isAutoBreakEnabled ? 'Auto-Break enabled (នឹងបំបែកបន្ទាត់ពេល Paste/វាយអក្សរ)' : 'Auto-Break disabled (រក្សាទម្រង់ដើម)', 'info');
+            });
+        }
+
+        setupAutoBreak(elements.scriptInput, null, () => isAutoBreakEnabled);
 
         if (elements.autoBreakBtn) {
             elements.autoBreakBtn.addEventListener('click', () => {

@@ -18,10 +18,10 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/') || config.allowedAudioMimeTypes.includes(file.mimetype)) {
+    if (file.mimetype.startsWith('audio/') || file.mimetype.startsWith('video/') || config.allowedAudioMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Only audio files (.mp3, .wav, .m4a, .webm, .ogg) are allowed!'), false);
+        cb(new Error('Only audio and video files (.mp4, .mov, .mkv, .webm, .avi, .mp3, .wav, .m4a, .ogg) are allowed!'), false);
     }
 };
 

@@ -1,4 +1,5 @@
 const VoiceChangerService = require('../services/voice-changer.service');
+const { convertToMp3 } = require('../utils/audio.util');
 
 class VoiceChangerController {
     /**
@@ -33,8 +34,10 @@ class VoiceChangerController {
                 });
             }
 
-            const inputPath = req.file.path;
+            const converted = await convertToMp3(req.file.path);
+            const inputPath = converted.filePath;
             const voice = req.body.voice || req.body.preset || 'km-recap-cinema';
+            const mode = req.body.mode || 'acoustic';
             const pitchShift = req.body.pitchShift !== undefined && req.body.pitchShift !== '' ? Number(req.body.pitchShift) : undefined;
             const speed = req.body.speed ? Number(req.body.speed) : 1.0;
             const removeNoise = req.body.removeNoise || 'medium';
@@ -43,9 +46,11 @@ class VoiceChangerController {
             const result = await VoiceChangerService.transformAudio({
                 inputPath,
                 voice,
+                preset: req.body.preset,
                 pitchShift,
                 speed,
                 removeNoise,
+                mode,
                 customApiKey
             });
 

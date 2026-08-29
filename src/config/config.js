@@ -9,7 +9,7 @@ const config = {
     // File upload settings
     uploadsDir: path.join(__dirname, '../../storage/uploads'),
     outputsDir: path.join(__dirname, '../../storage/outputs'),
-    maxFileSize: 25 * 1024 * 1024, // 25MB
+    maxFileSize: 100 * 1024 * 1024, // 100MB (Supports Video & Audio files)
     allowedAudioMimeTypes: [
         'audio/mpeg',
         'audio/mp3',
@@ -19,7 +19,13 @@ const config = {
         'audio/ogg',
         'audio/mp4',
         'audio/x-m4a',
-        'audio/m4a'
+        'audio/m4a',
+        'video/mp4',
+        'video/webm',
+        'video/quicktime',
+        'video/x-matroska',
+        'video/avi',
+        'video/mpeg'
     ],
 
     // Storage cleanup settings (Cron / Scheduler)

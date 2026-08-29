@@ -1,0 +1,77 @@
+[
+  {
+    "id": "cloned-1787998463783",
+    "name": "Master Speaker Gold",
+    "lang": "km",
+    "referenceAudioPath": "F:\\Desktop\\Master-Voice\\storage\\outputs\\tts-1787998453210-143251.mp3",
+    "acoustic": {
+      "detectedHz": 154,
+      "minHz": 101,
+      "maxHz": 208,
+      "voiceCategory": "Baritone / Tenor (បុរស - សំឡេងធម្មជាតិ)",
+      "baseNeuralVoice": "km-KH-PisethNeural",
+      "baseStandardHz": 120,
+      "deltaPitchHz": 34,
+      "pitchOffsetStr": "+34Hz",
+      "dspFiltergraph": "equalizer=f=200:width_type=h:width=100:g=1.5,equalizer=f=2500:width_type=h:width=500:g=1.5,compand=0.3|0.8:6:-70/-60|-20/-10|0/0:6:0:-90:0.2",
+      "spectral": {
+        "subBassDb": -1,
+        "bodyDb": 0,
+        "presenceDb": 0,
+        "airDb": 1,
+        "zcr": 0.123
+      }
+    },
+    "createdAt": "2026-08-29T10:14:24.069Z"
+  },
+  {
+    "id": "cloned-1787566066619",
+    "name": "My Cloned Voice",
+    "lang": "km",
+    "referenceAudioPath": "storage/uploads/sample-check.mp3",
+    "acoustic": {
+      "detectedHz": 141,
+      "minHz": 95,
+      "maxHz": 195,
+      "voiceCategory": "Tenor (បុរស - សំឡេងកម្រិតមធ្យម)",
+      "baseNeuralVoice": "km-KH-PisethNeural",
+      "baseStandardHz": 120,
+      "deltaPitchHz": 21,
+      "pitchOffsetStr": "+21Hz",
+      "dspFiltergraph": "equalizer=f=220:width_type=h:width=120:g=1.8,equalizer=f=2600:width_type=h:width=550:g=1.6,compand=0.3|0.8:6:-70/-60|-20/-10|0/0:6:0:-90:0.2",
+      "spectral": {
+        "subBassDb": 0,
+        "bodyDb": 1,
+        "presenceDb": 1,
+        "airDb": 1,
+        "zcr": 0.115
+      }
+    },
+    "createdAt": "2026-08-24T10:07:46.619Z"
+  },
+  {
+    "id": "cloned-1787562721953",
+    "name": "panha",
+    "lang": "km",
+    "referenceAudioPath": "storage/uploads/sample-check.mp3",
+    "acoustic": {
+      "detectedHz": 132,
+      "minHz": 90,
+      "maxHz": 185,
+      "voiceCategory": "Baritone (បុរស - សំឡេងទន់ & ស្រទន់)",
+      "baseNeuralVoice": "km-KH-PisethNeural",
+      "baseStandardHz": 120,
+      "deltaPitchHz": 12,
+      "pitchOffsetStr": "+12Hz",
+      "dspFiltergraph": "equalizer=f=250:width_type=h:width=120:g=2.2,equalizer=f=3000:width_type=h:width=600:g=1.8,compand=0.3|0.8:6:-70/-60|-20/-10|0/0:6:0:-90:0.2",
+      "spectral": {
+        "subBassDb": 1,
+        "bodyDb": 1,
+        "presenceDb": 2,
+        "airDb": 1,
+        "zcr": 0.11
+      }
+    },
+    "createdAt": "2026-08-24T09:12:01.953Z"
+  }
+]

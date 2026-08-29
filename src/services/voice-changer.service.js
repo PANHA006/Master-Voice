@@ -7,60 +7,60 @@ const { ensureDir } = require('../utils/audio.util');
 const VoiceManager = require('../utils/voice-manager.util');
 const STTService = require('./stt.service');
 
-// Acoustic fallback DSP parameter mappings for Voice Models when STT is offline
+// Acoustic Formant-Preserving DSP parameter mappings for Voice Models
 const VOICE_MODEL_DSP_MAP = {
     // 🎬 សម្រាយរឿង (Recap & Storytelling Series)
-    'km-recap-cinema': { pitchFactor: 0.68, eq: 'equalizer=f=100:width_type=h:width=80:g=8,equalizer=f=2500:width_type=h:width=400:g=-4' },
-    'km-recap-drama': { pitchFactor: 1.30, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'km-recap-suspense': { pitchFactor: 0.62, eq: 'equalizer=f=80:width_type=h:width=70:g=9,lowpass=f=4000' },
+    'km-recap-cinema': { pitchFactor: 0.82, eq: 'equalizer=f=120:width_type=h:width=90:g=6,equalizer=f=3200:width_type=h:width=400:g=2.5' },
+    'km-recap-drama': { pitchFactor: 1.18, eq: 'equalizer=f=2400:width_type=h:width=400:g=3.5,highpass=f=100' },
+    'km-recap-suspense': { pitchFactor: 0.78, eq: 'equalizer=f=100:width_type=h:width=80:g=7,equalizer=f=2800:width_type=h:width=300:g=-2' },
 
     // 🎭 សម្លេងតួអង្គ (Character Series)
-    'km-char-elder-m': { pitchFactor: 0.80, eq: 'vibrato=f=4:d=0.22,equalizer=f=120:width_type=h:width=80:g=4,lowpass=f=4500' },
-    'km-char-elder-f': { pitchFactor: 1.15, eq: 'vibrato=f=3.8:d=0.22,equalizer=f=2200:width_type=h:width=300:g=3' },
-    'km-char-villain': { pitchFactor: 0.58, eq: 'equalizer=f=80:width_type=h:width=60:g=8,aecho=0.8:0.5:30:0.25' },
-    'km-char-hero': { pitchFactor: 0.78, eq: 'equalizer=f=150:width_type=h:width=100:g=5' },
-    'km-char-heroine': { pitchFactor: 1.42, eq: 'equalizer=f=2800:width_type=h:width=300:g=5,highpass=f=150' },
+    'km-char-elder-m': { pitchFactor: 0.86, eq: 'vibrato=f=3.5:d=0.18,equalizer=f=140:width_type=h:width=80:g=4' },
+    'km-char-elder-f': { pitchFactor: 1.12, eq: 'vibrato=f=3.5:d=0.18,equalizer=f=2200:width_type=h:width=300:g=3' },
+    'km-char-villain': { pitchFactor: 0.74, eq: 'equalizer=f=90:width_type=h:width=70:g=7,aecho=0.8:0.4:25:0.2' },
+    'km-char-hero': { pitchFactor: 0.88, eq: 'equalizer=f=160:width_type=h:width=100:g=4,equalizer=f=3500:width_type=h:width=400:g=3' },
+    'km-char-heroine': { pitchFactor: 1.25, eq: 'equalizer=f=2600:width_type=h:width=300:g=4,highpass=f=120' },
 
     // 👶 សម្លេងក្មេង (Kids & Animation)
-    'km-child-boy': { pitchFactor: 1.46, eq: 'equalizer=f=3000:width_type=h:width=300:g=5,highpass=f=160' },
-    'km-child-girl': { pitchFactor: 1.58, eq: 'equalizer=f=3400:width_type=h:width=300:g=6,highpass=f=200' },
-    'km-child-cartoon': { pitchFactor: 1.72, eq: 'equalizer=f=3800:width_type=h:width=300:g=6,highpass=f=220' },
+    'km-child-boy': { pitchFactor: 1.32, eq: 'equalizer=f=2800:width_type=h:width=300:g=4,highpass=f=140' },
+    'km-child-girl': { pitchFactor: 1.40, eq: 'equalizer=f=3200:width_type=h:width=300:g=4.5,highpass=f=160' },
+    'km-child-cartoon': { pitchFactor: 1.48, eq: 'equalizer=f=3500:width_type=h:width=300:g=5,highpass=f=180' },
 
     // 📚 វីដេអូអប់រំ & ចំណេះដឹង (Education Series)
-    'km-edu-professor': { pitchFactor: 0.76, eq: 'equalizer=f=130:width_type=h:width=100:g=5' },
-    'km-edu-explainer': { pitchFactor: 0.80, eq: 'equalizer=f=150:width_type=h:width=100:g=4' },
-    'km-edu-history': { pitchFactor: 0.72, eq: 'equalizer=f=110:width_type=h:width=90:g=6' },
-    'km-edu-motivation': { pitchFactor: 0.82, eq: 'equalizer=f=160:width_type=h:width=100:g=4' },
-    'km-edu-instructor': { pitchFactor: 1.32, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'km-edu-kids-teacher': { pitchFactor: 1.45, eq: 'equalizer=f=3000:width_type=h:width=300:g=5,highpass=f=150' },
-    'km-edu-documentary-f': { pitchFactor: 1.28, eq: 'equalizer=f=2200:width_type=h:width=350:g=3,highpass=f=100' },
-    'km-edu-mindfulness': { pitchFactor: 1.22, eq: 'equalizer=f=2000:width_type=h:width=300:g=3' },
+    'km-edu-professor': { pitchFactor: 0.88, eq: 'equalizer=f=150:width_type=h:width=100:g=4,equalizer=f=3000:width_type=h:width=400:g=2.5' },
+    'km-edu-explainer': { pitchFactor: 0.92, eq: 'equalizer=f=160:width_type=h:width=100:g=3,equalizer=f=3200:width_type=h:width=400:g=3' },
+    'km-edu-history': { pitchFactor: 0.84, eq: 'equalizer=f=130:width_type=h:width=90:g=5' },
+    'km-edu-motivation': { pitchFactor: 0.90, eq: 'equalizer=f=170:width_type=h:width=100:g=4,equalizer=f=3400:width_type=h:width=400:g=3' },
+    'km-edu-instructor': { pitchFactor: 1.20, eq: 'equalizer=f=2400:width_type=h:width=400:g=3.5,highpass=f=100' },
+    'km-edu-kids-teacher': { pitchFactor: 1.30, eq: 'equalizer=f=2800:width_type=h:width=300:g=4,highpass=f=120' },
+    'km-edu-documentary-f': { pitchFactor: 1.18, eq: 'equalizer=f=2200:width_type=h:width=350:g=3,highpass=f=90' },
+    'km-edu-mindfulness': { pitchFactor: 1.14, eq: 'equalizer=f=2000:width_type=h:width=300:g=2.5' },
 
-    // 👨 Piseth Series
-    'km-KH-PisethNeural': { pitchFactor: 0.78, eq: 'equalizer=f=140:width_type=h:width=100:g=5' },
-    'km-piseth-edu': { pitchFactor: 0.76, eq: 'equalizer=f=130:width_type=h:width=100:g=5' },
-    'km-piseth-doc': { pitchFactor: 0.68, eq: 'equalizer=f=100:width_type=h:width=80:g=7' },
-    'km-piseth-story': { pitchFactor: 0.75, eq: 'equalizer=f=135:width_type=h:width=90:g=5' },
-    'km-piseth-promo': { pitchFactor: 0.84, eq: 'equalizer=f=180:width_type=h:width=120:g=4' },
+    // 👨 Piseth Series (Deep Warm Masculine Resonance with Crystal Speech Presence)
+    'km-KH-PisethNeural': { pitchFactor: 0.88, eq: 'equalizer=f=180:width_type=h:width=120:g=4,equalizer=f=3200:width_type=h:width=500:g=3.5,highpass=f=70' },
+    'km-piseth-edu': { pitchFactor: 0.88, eq: 'equalizer=f=170:width_type=h:width=100:g=4,equalizer=f=3000:width_type=h:width=400:g=3' },
+    'km-piseth-doc': { pitchFactor: 0.84, eq: 'equalizer=f=140:width_type=h:width=90:g=5,equalizer=f=3200:width_type=h:width=400:g=3' },
+    'km-piseth-story': { pitchFactor: 0.86, eq: 'equalizer=f=160:width_type=h:width=100:g=4,equalizer=f=2800:width_type=h:width=400:g=2.5' },
+    'km-piseth-promo': { pitchFactor: 0.90, eq: 'equalizer=f=200:width_type=h:width=120:g=3.5,equalizer=f=3500:width_type=h:width=400:g=4' },
 
-    // 👩 Sreymom Series
-    'km-KH-SreymomNeural': { pitchFactor: 1.34, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'km-sreymom-edu': { pitchFactor: 1.30, eq: 'equalizer=f=2300:width_type=h:width=350:g=4,highpass=f=110' },
-    'km-sreymom-story': { pitchFactor: 1.25, eq: 'equalizer=f=2100:width_type=h:width=300:g=3,highpass=f=100' },
-    'km-sreymom-news': { pitchFactor: 1.36, eq: 'equalizer=f=2500:width_type=h:width=350:g=4,highpass=f=120' },
-    'km-sreymom-fun': { pitchFactor: 1.44, eq: 'equalizer=f=2800:width_type=h:width=300:g=5,highpass=f=140' },
+    // 👩 Sreymom Series (Bright Silky Feminine Resonance)
+    'km-KH-SreymomNeural': { pitchFactor: 1.22, eq: 'equalizer=f=2600:width_type=h:width=400:g=4,equalizer=f=4500:width_type=h:width=600:g=2.5,highpass=f=110' },
+    'km-sreymom-edu': { pitchFactor: 1.20, eq: 'equalizer=f=2400:width_type=h:width=350:g=3.5,highpass=f=100' },
+    'km-sreymom-story': { pitchFactor: 1.18, eq: 'equalizer=f=2200:width_type=h:width=300:g=3,highpass=f=95' },
+    'km-sreymom-news': { pitchFactor: 1.24, eq: 'equalizer=f=2700:width_type=h:width=350:g=4,highpass=f=110' },
+    'km-sreymom-fun': { pitchFactor: 1.28, eq: 'equalizer=f=3000:width_type=h:width=300:g=4,highpass=f=120' },
 
     // 🇺🇸 English Voices
-    'en-US-JennyNeural': { pitchFactor: 1.35, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'en-US-GuyNeural': { pitchFactor: 0.78, eq: 'equalizer=f=140:width_type=h:width=100:g=5' },
-    'en-US-AriaNeural': { pitchFactor: 1.38, eq: 'equalizer=f=2600:width_type=h:width=350:g=4,highpass=f=120' },
-    'en-US-ChristopherNeural': { pitchFactor: 0.76, eq: 'equalizer=f=130:width_type=h:width=100:g=5' },
-    'en-US-EricNeural': { pitchFactor: 0.75, eq: 'equalizer=f=120:width_type=h:width=90:g=5' },
-    'en-US-AnaNeural': { pitchFactor: 1.48, eq: 'equalizer=f=3000:width_type=h:width=300:g=5,highpass=f=150' },
-    'en-GB-SoniaNeural': { pitchFactor: 1.33, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'en-GB-RyanNeural': { pitchFactor: 0.78, eq: 'equalizer=f=140:width_type=h:width=100:g=5' },
-    'en-AU-NatashaNeural': { pitchFactor: 1.33, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' },
-    'en-AU-WilliamNeural': { pitchFactor: 0.78, eq: 'equalizer=f=140:width_type=h:width=100:g=5' }
+    'en-US-JennyNeural': { pitchFactor: 1.22, eq: 'equalizer=f=2400:width_type=h:width=400:g=3.5,highpass=f=100' },
+    'en-US-GuyNeural': { pitchFactor: 0.88, eq: 'equalizer=f=160:width_type=h:width=100:g=4,equalizer=f=3200:width_type=h:width=400:g=3' },
+    'en-US-AriaNeural': { pitchFactor: 1.24, eq: 'equalizer=f=2600:width_type=h:width=350:g=3.5,highpass=f=100' },
+    'en-US-ChristopherNeural': { pitchFactor: 0.86, eq: 'equalizer=f=150:width_type=h:width=100:g=4' },
+    'en-US-EricNeural': { pitchFactor: 0.85, eq: 'equalizer=f=140:width_type=h:width=90:g=4' },
+    'en-US-AnaNeural': { pitchFactor: 1.30, eq: 'equalizer=f=2800:width_type=h:width=300:g=4,highpass=f=120' },
+    'en-GB-SoniaNeural': { pitchFactor: 1.20, eq: 'equalizer=f=2400:width_type=h:width=400:g=3,highpass=f=100' },
+    'en-GB-RyanNeural': { pitchFactor: 0.88, eq: 'equalizer=f=160:width_type=h:width=100:g=4' },
+    'en-AU-NatashaNeural': { pitchFactor: 1.20, eq: 'equalizer=f=2400:width_type=h:width=400:g=3,highpass=f=100' },
+    'en-AU-WilliamNeural': { pitchFactor: 0.88, eq: 'equalizer=f=160:width_type=h:width=100:g=4' }
 };
 
 class VoiceChangerService {
@@ -120,7 +120,7 @@ class VoiceChangerService {
      * @param {boolean|string} [params.removeNoise] - Noise suppression mode ('off', 'light', 'medium', 'strong')
      * @param {string} [params.customApiKey] - Optional Gemini API Key for Timestamps and Neural Speech
      */
-    static async transformAudio({ inputPath, voice = 'km-recap-cinema', preset, pitchShift, speed = 1.0, removeNoise = 'medium', customApiKey }) {
+    static async transformAudio({ inputPath, voice = 'km-recap-cinema', preset, pitchShift, speed = 1.0, removeNoise = 'medium', mode = 'acoustic', customApiKey }) {
         if (!inputPath || !fs.existsSync(inputPath)) {
             throw new Error('Input audio file is missing or invalid.');
         }
@@ -130,55 +130,58 @@ class VoiceChangerService {
         const speedFactor = Math.max(0.5, Math.min(2.0, Number(speed) || 1.0));
         const selectedVoice = voice || preset || 'km-recap-cinema';
 
-        // 1. Try Neural Speech-to-Speech (STT -> Target Voice Model TTS) if Gemini is available
-        if (apiKey) {
-            try {
-                const sttResult = await STTService.transcribe({
-                    filePath: inputPath,
-                    mimeType: 'audio/mp3',
-                    customApiKey: apiKey
-                });
-
-                if (sttResult && sttResult.lines && sttResult.lines.length > 0 && !sttResult.warning) {
-                    const fullText = sttResult.lines.map(l => l.text).join('\n');
-                    const targetLang = selectedVoice.startsWith('en-') ? 'en' : 'km';
-
-                    // Synthesize using the target Voice Model
-                    const ttsResult = await TTSService.synthesize({
-                        text: fullText,
-                        voice: selectedVoice,
-                        lang: targetLang,
-                        rate: speedFactor
-                    });
-
-                    if (ttsResult && ttsResult.audioDataUri) {
-                        return {
-                            success: true,
-                            mode: 'neural-voice-model',
-                            audioUrl: ttsResult.audioUrl,
-                            audioDataUri: ttsResult.audioDataUri,
-                            fileName: ttsResult.fileName,
-                            voice: selectedVoice,
-                            duration: ttsResult.duration,
-                            hasGeminiKey: true,
-                            timestamps: ttsResult.timestamps || sttResult.lines,
-                            formattedText: ttsResult.formattedText || sttResult.formattedText
-                        };
-                    }
-                }
-            } catch (neuralErr) {
-                console.warn('[VoiceChanger] Neural STT/TTS synthesis note, falling back to Acoustic DSP:', neuralErr.message);
+        // 1. Neural Mode (Cascade STT -> TTS synthesis)
+        if (mode === 'neural') {
+            if (!apiKey) {
+                throw new Error('Neural AI Speech Mode requires a Gemini API Key. Please add your API key or use Acoustic Morphing Mode.');
             }
+
+            const sttResult = await STTService.transcribe({
+                filePath: inputPath,
+                mimeType: 'audio/mp3',
+                customApiKey: apiKey
+            });
+
+            if (!sttResult || !sttResult.lines || sttResult.lines.length === 0) {
+                throw new Error('Could not transcribe audio for neural synthesis.');
+            }
+
+            const fullText = sttResult.lines.map(l => l.text).join('\n');
+            const targetLang = selectedVoice.startsWith('en-') ? 'en' : 'km';
+
+            const ttsResult = await TTSService.synthesize({
+                text: fullText,
+                voice: selectedVoice,
+                lang: targetLang,
+                rate: speedFactor
+            });
+
+            if (!ttsResult || !ttsResult.audioDataUri) {
+                throw new Error('Neural speech synthesis failed.');
+            }
+
+            return {
+                success: true,
+                mode: 'neural-voice-model',
+                audioUrl: ttsResult.audioUrl,
+                audioDataUri: ttsResult.audioDataUri,
+                fileName: ttsResult.fileName,
+                voice: selectedVoice,
+                duration: ttsResult.duration,
+                hasGeminiKey: true,
+                timestamps: ttsResult.timestamps || sttResult.lines,
+                formattedText: ttsResult.formattedText || sttResult.formattedText
+            };
         }
 
-        // 2. Acoustic DSP Morphing Engine (Fallback / Pure Offline DSP)
+        // 2. Acoustic DSP Morphing Engine (Preserves 100% original rhythm, intonation, breath, pauses & emotions)
         ensureDir(config.outputsDir);
         const fileName = `voice-change-${Date.now()}-${Math.round(Math.random() * 1e6)}.mp3`;
         const outputPath = path.join(config.outputsDir, fileName);
 
         const filterParts = [];
 
-        // Noise Reduction Filter
+        // Noise Suppression Filter
         if (removeNoise && removeNoise !== 'off' && removeNoise !== 'false') {
             let nrDb = 18;
             let nfDb = -30;
@@ -209,7 +212,7 @@ class VoiceChangerService {
             }
         } else {
             const dspProfile = VOICE_MODEL_DSP_MAP[selectedVoice] || (
-                selectedVoice.includes('Sreymom') || selectedVoice.includes('Jenny') || selectedVoice.includes('female') || selectedVoice.includes('girl') || selectedVoice.includes('heroine') || selectedVoice.includes('drama')
+                selectedVoice.includes('Sreymom') || selectedVoice.includes('Jenny') || selectedVoice.includes('female') || selectedVoice.includes('girl') || selectedVoice.includes('heroine') || selectedVoice.includes('drama') || selectedVoice.includes('child')
                     ? { pitchFactor: 1.34, eq: 'equalizer=f=2400:width_type=h:width=400:g=4,highpass=f=120' }
                     : { pitchFactor: 0.78, eq: 'equalizer=f=140:width_type=h:width=100:g=5' }
             );
@@ -217,27 +220,15 @@ class VoiceChangerService {
             extraEq = dspProfile.eq || '';
         }
 
-        const tempoMultiplier = (1 / pitchFactor) * speedFactor;
-
-        // Construct rate & tempo filter chain
-        filterParts.push(`asetrate=44100*${pitchFactor.toFixed(4)}`);
-
-        let remTempo = tempoMultiplier;
-        while (remTempo < 0.5) {
-            filterParts.push('atempo=0.5');
-            remTempo /= 0.5;
-        }
-        while (remTempo > 2.0) {
-            filterParts.push('atempo=2.0');
-            remTempo /= 2.0;
-        }
-        filterParts.push(`atempo=${remTempo.toFixed(4)}`);
-
-        filterParts.push('aresample=44100');
+        // Construct Formant-Preserving Vocoder (Rubberband Engine)
+        filterParts.push(`rubberband=pitch=${pitchFactor.toFixed(4)}:tempo=${speedFactor.toFixed(4)}:formant=preserved:pitchq=quality:transients=crisp:phase=laminar`);
 
         if (extraEq) {
             filterParts.push(extraEq);
         }
+
+        // Studio Vocal Compressor for crisp, warm, studio-grade clarity
+        filterParts.push('acompressor=threshold=-16dB:ratio=2.5:attack=5:release=50');
 
         const fullAudioFilter = filterParts.join(',');
 
@@ -265,20 +256,47 @@ class VoiceChangerService {
         const audioBase64 = transformedBuffer.toString('base64');
         const { totalDuration, silenceStarts } = await this.detectAudioSegments(outputPath);
 
-        // Build accurate silence-aligned intervals across audio duration
-        const segmentPoints = [0, ...silenceStarts];
-        const timestamps = segmentPoints.map((sec, idx) => {
-            const timeStr = this.formatTime(sec);
-            const nextSec = idx < segmentPoints.length - 1 ? segmentPoints[idx + 1] : totalDuration;
-            const text = `ចង្វាក់និយាយ ${timeStr} - ${this.formatTime(nextSec)}`;
-            return {
-                timestamp: timeStr,
-                text,
-                seconds: Math.round(sec * 100) / 100,
-                formattedLine: `[${timeStr}] ${text}`
-            };
-        });
-        const formattedText = timestamps.map(t => t.formattedLine).join('\n');
+        // Try getting real spoken words timestamps via Gemini STT (without altering the morphed original audio)
+        let timestamps = [];
+        let formattedText = '';
+
+        if (apiKey) {
+            try {
+                const sttResult = await STTService.transcribe({
+                    filePath: inputPath,
+                    mimeType: 'audio/mp3',
+                    customApiKey: apiKey
+                });
+                if (sttResult && sttResult.lines && sttResult.lines.length > 0 && !sttResult.warning) {
+                    timestamps = sttResult.lines.map(line => ({
+                        timestamp: line.timestamp,
+                        text: line.text,
+                        seconds: line.seconds,
+                        formattedLine: line.formattedLine || `[${line.timestamp}] ${line.text}`
+                    }));
+                    formattedText = timestamps.map(t => t.formattedLine).join('\n');
+                }
+            } catch (sttErr) {
+                console.warn('[VoiceChanger] STT subtitle transcription note:', sttErr.message);
+            }
+        }
+
+        // Fallback timestamps if STT was not available or empty
+        if (timestamps.length === 0) {
+            const segmentPoints = [0, ...silenceStarts];
+            timestamps = segmentPoints.map((sec, idx) => {
+                const timeStr = this.formatTime(sec);
+                const nextSec = idx < segmentPoints.length - 1 ? segmentPoints[idx + 1] : totalDuration;
+                const text = `ចង្វាក់និយាយ ${timeStr} - ${this.formatTime(nextSec)}`;
+                return {
+                    timestamp: timeStr,
+                    text,
+                    seconds: Math.round(sec * 100) / 100,
+                    formattedLine: `[${timeStr}] ${text}`
+                };
+            });
+            formattedText = timestamps.map(t => t.formattedLine).join('\n');
+        }
 
         return {
             success: true,

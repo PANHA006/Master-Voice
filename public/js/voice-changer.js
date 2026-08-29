@@ -3,6 +3,7 @@
  */
 
 const VoiceChanger = (() => {
+    let currentMode = 'acoustic'; // 'acoustic' (keeps exact rhythm/cadence/emotion) or 'neural' (AI TTS re-reading)
     let originalAudioBlob = null;
     let originalAudioUrl = null;
     let transformedAudioDataUri = null;
@@ -18,9 +19,16 @@ const VoiceChanger = (() => {
 
     function init() {
         elements = {
+            // Mode Selectors
+            modeAcousticBtn: document.getElementById('vcModeAcousticBtn'),
+            modeNeuralBtn: document.getElementById('vcModeNeuralBtn'),
+
+            // Upload & Mic
             dropZone: document.getElementById('vcDropZone'),
             fileInput: document.getElementById('vcFileInput'),
+            fileInfoContainer: document.getElementById('vcFileInfoContainer'),
             fileName: document.getElementById('vcFileName'),
+            clearAudioBtn: document.getElementById('vcClearAudioBtn'),
             micBtn: document.getElementById('vcMicBtn'),
             micPulse: document.getElementById('vcMicPulse'),
             micStatusText: document.getElementById('vcMicStatusText'),
@@ -32,7 +40,7 @@ const VoiceChanger = (() => {
             origPlayPauseBtn: document.getElementById('vcOrigPlayPauseBtn'),
             origPlayIcon: document.getElementById('vcOrigPlayIcon'),
             origSeeker: document.getElementById('vcOrigSeeker'),
-            origCurrentTime: document.getElementById('vcOrigCurrentTime'),
+            origCurrentTime: document.getElementById('vcCurrentTime') || document.getElementById('vcOrigCurrentTime'),
             origTotalDuration: document.getElementById('vcOrigTotalDuration'),
 
             // Morph Controls
@@ -54,6 +62,7 @@ const VoiceChanger = (() => {
             transSeeker: document.getElementById('vcTransSeeker'),
             transCurrentTime: document.getElementById('vcTransCurrentTime'),
             transTotalDuration: document.getElementById('vcTransTotalDuration'),
+            openEditorBtn: document.getElementById('vcOpenEditorBtn'),
             downloadAudioBtn: document.getElementById('vcDownloadAudioBtn'),
 
             // Timestamps Box
@@ -174,7 +183,54 @@ const VoiceChanger = (() => {
         return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
 
+    function setMode(mode) {
+        currentMode = mode;
+        if (!elements.modeAcousticBtn || !elements.modeNeuralBtn) return;
+
+        if (mode === 'acoustic') {
+            elements.modeAcousticBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-md shadow-rose-600/30';
+            elements.modeNeuralBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center justify-center gap-1.5';
+            showToast('Mode: Acoustic Morphing (រក្សាដង្ហើម ចង្វាក់ និងអារម្មណ៍ដើម ១០០%)', 'info');
+        } else {
+            elements.modeNeuralBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-md shadow-rose-600/30';
+            elements.modeAcousticBtn.className = 'flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center justify-center gap-1.5';
+            showToast('Mode: Neural AI Speech (បម្លែងជាសំឡេង AI ថ្មីតាមអត្ថបទ)', 'info');
+        }
+    }
+
+    function clearInputAudio() {
+        originalAudioBlob = null;
+        if (originalAudioUrl) {
+            URL.revokeObjectURL(originalAudioUrl);
+            originalAudioUrl = null;
+        }
+        if (elements.fileInput) elements.fileInput.value = '';
+        if (elements.fileInfoContainer) elements.fileInfoContainer.classList.add('hidden');
+        if (elements.fileName) elements.fileName.textContent = '';
+        if (elements.origAudioElement) {
+            elements.origAudioElement.pause();
+            elements.origAudioElement.src = '';
+        }
+        if (elements.origCurrentTime) elements.origCurrentTime.textContent = '00:00';
+        if (elements.origTotalDuration) elements.origTotalDuration.textContent = '00:00';
+        if (elements.origSeeker) elements.origSeeker.value = 0;
+        showToast('Cleared input audio.', 'info');
+    }
+
     function setupEventListeners() {
+        // Mode Switcher
+        if (elements.modeAcousticBtn) {
+            elements.modeAcousticBtn.addEventListener('click', () => setMode('acoustic'));
+        }
+        if (elements.modeNeuralBtn) {
+            elements.modeNeuralBtn.addEventListener('click', () => setMode('neural'));
+        }
+
+        // Clear Audio
+        if (elements.clearAudioBtn) {
+            elements.clearAudioBtn.addEventListener('click', clearInputAudio);
+        }
+
         // Listen for favorite and active voice changes from Test Voice Studio
         window.addEventListener('voxsync:favoritesChanged', () => {
             const currentSelected = elements.presetSelect ? elements.presetSelect.value : null;
@@ -254,6 +310,20 @@ const VoiceChanger = (() => {
             elements.transformBtn.addEventListener('click', performVoiceTransform);
         }
 
+        // Open in Voice Editor Button Click
+        if (elements.openEditorBtn) {
+            elements.openEditorBtn.addEventListener('click', () => {
+                const targetUrl = transformedAudioDataUri || transformedAudioUrl;
+                if (!targetUrl) return;
+                if (typeof window.loadAudioToVoiceEditor === 'function') {
+                    window.loadAudioToVoiceEditor(targetUrl, 'Transformed_Voice.mp3');
+                    showToast('✓ បានបើកសំឡេងនៅក្នុង Voice Editor ជោគជ័យ!', 'success');
+                } else {
+                    showToast('Voice Editor module is loading...', 'info');
+                }
+            });
+        }
+
         // Copy Timestamps
         if (elements.copyAllBtn) {
             elements.copyAllBtn.addEventListener('click', () => {
@@ -326,7 +396,9 @@ const VoiceChanger = (() => {
         originalAudioBlob = file;
         if (elements.fileName) {
             elements.fileName.textContent = `Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
-            elements.fileName.classList.remove('hidden');
+        }
+        if (elements.fileInfoContainer) {
+            elements.fileInfoContainer.classList.remove('hidden');
         }
 
         loadOriginalAudio(URL.createObjectURL(file));
@@ -351,7 +423,9 @@ const VoiceChanger = (() => {
                 loadOriginalAudio(URL.createObjectURL(originalAudioBlob));
                 if (elements.fileName) {
                     elements.fileName.textContent = `Recorded Audio Sample (${micSeconds}s)`;
-                    elements.fileName.classList.remove('hidden');
+                }
+                if (elements.fileInfoContainer) {
+                    elements.fileInfoContainer.classList.remove('hidden');
                 }
                 showToast('Voice recorded successfully! You can play it below.', 'success');
             };
@@ -381,7 +455,7 @@ const VoiceChanger = (() => {
             isRecording = false;
             clearInterval(micTimerInterval);
 
-            if (elements.micStatusText) elements.micStatusText.textContent = 'Record Voice';
+            if (elements.micStatusText) elements.micStatusText.textContent = 'Record Microphone';
             if (elements.micPulse) elements.micPulse.classList.add('hidden');
             if (elements.micBtn) elements.micBtn.classList.remove('ring-2', 'ring-rose-500');
         }
@@ -392,9 +466,6 @@ const VoiceChanger = (() => {
         if (elements.origAudioElement) {
             elements.origAudioElement.src = src;
             elements.origAudioElement.load();
-        }
-        if (elements.origPlayerContainer) {
-            elements.origPlayerContainer.classList.remove('hidden');
         }
     }
 
@@ -484,9 +555,12 @@ const VoiceChanger = (() => {
             const sec = parseFloat(row.dataset.sec || 0);
             const nextSec = parseFloat(row.dataset.nextSec || 999999);
             if (curSec >= sec && curSec < nextSec) {
-                row.classList.add('bg-cyan-950/60', 'border-cyan-500/80');
+                if (!row.classList.contains('active-row')) {
+                    row.classList.add('active-row', 'bg-cyan-950/80', 'border-cyan-500/80');
+                    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             } else {
-                row.classList.remove('bg-cyan-950/60', 'border-cyan-500/80');
+                row.classList.remove('active-row', 'bg-cyan-950/80', 'border-cyan-500/80');
             }
         });
     }
@@ -509,6 +583,7 @@ const VoiceChanger = (() => {
         formData.append('audio', originalAudioBlob, 'input-audio.webm');
         formData.append('voice', preset);
         formData.append('preset', preset);
+        formData.append('mode', currentMode);
         formData.append('removeNoise', removeNoise);
         if (pitchShift !== 0) {
             formData.append('pitchShift', pitchShift);
@@ -540,17 +615,22 @@ const VoiceChanger = (() => {
                 elements.transAudioElement.load();
             }
 
-            if (elements.transPlayerContainer) {
-                elements.transPlayerContainer.classList.remove('hidden');
-            }
-
             if (elements.downloadAudioBtn) {
                 elements.downloadAudioBtn.href = data.audioDataUri || data.audioUrl;
                 elements.downloadAudioBtn.download = data.fileName || 'transformed-voice.mp3';
             }
 
+            if (elements.openEditorBtn) {
+                elements.openEditorBtn.classList.remove('pointer-events-none', 'opacity-50');
+            }
+
             renderTimestamps(transformedParsedLines);
-            showToast('Voice transformed successfully preserving exact rhythm & cadence!', 'success');
+            
+            if (currentMode === 'acoustic') {
+                showToast('Voice transformed successfully! Exact rhythm, breath & emotion preserved.', 'success');
+            } else {
+                showToast('Neural speech generated successfully with AI model.', 'success');
+            }
 
         } catch (err) {
             console.error('Transform error:', err);

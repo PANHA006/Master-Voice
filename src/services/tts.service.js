@@ -247,16 +247,18 @@ class TTSService {
         if (selectedVoice && selectedVoice.startsWith('cloned-')) {
             const CloneService = require('./clone.service');
             const clonedVoice = VoiceManager.getClonedVoices().find(v => v.id === selectedVoice);
-            if (clonedVoice && clonedVoice.referenceAudioPath && fs.existsSync(clonedVoice.referenceAudioPath)) {
+            if (clonedVoice) {
                 return await CloneService.cloneAndSynthesize({
                     referenceAudioPath: clonedVoice.referenceAudioPath,
+                    savedAcoustic: clonedVoice.acoustic,
                     text,
                     voiceName: clonedVoice.name,
                     lang: targetLang,
-                    existingVoiceId: clonedVoice.id
+                    existingVoiceId: clonedVoice.id,
+                    rate: speedRate
                 });
             } else {
-                console.warn(`Reference sample missing for cloned voice "${selectedVoice}". Falling back to default voice.`);
+                console.warn(`Cloned voice "${selectedVoice}" not found. Falling back to default voice.`);
                 selectedVoice = (targetLang === 'km') ? 'km-KH-PisethNeural' : 'en-US-JennyNeural';
             }
         }

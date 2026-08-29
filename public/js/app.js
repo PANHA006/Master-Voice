@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabSttBtn = document.getElementById('tabSttBtn');
     const tabCloneBtn = document.getElementById('tabCloneBtn');
     const tabVoiceChangerBtn = document.getElementById('tabVoiceChangerBtn');
+    const tabEditorBtn = document.getElementById('tabEditorBtn');
     const tabHistoryBtn = document.getElementById('tabHistoryBtn');
 
     const tabTts = document.getElementById('tabTts');
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabStt = document.getElementById('tabStt');
     const tabClone = document.getElementById('tabClone');
     const tabVoiceChanger = document.getElementById('tabVoiceChanger');
+    const tabEditor = document.getElementById('tabEditor');
     const tabHistory = document.getElementById('tabHistory');
 
     const moduleTitle = document.getElementById('moduleTitle');
@@ -69,6 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
             badge: 'Voice Changer'
         },
         {
+            btn: tabEditorBtn,
+            section: tabEditor,
+            title: 'Professional Voice & Audio Editor (ស្ទូឌីយោកាត់ត និងកែច្នៃសំឡេង)',
+            badge: 'Voice Editor'
+        },
+        {
             btn: tabHistoryBtn,
             section: tabHistory,
             title: 'Audio File History & Storage Manager',
@@ -102,12 +110,60 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabSttBtn && tabStt) tabSttBtn.addEventListener('click', () => switchTab(tabSttBtn, tabStt));
     if (tabCloneBtn && tabClone) tabCloneBtn.addEventListener('click', () => switchTab(tabCloneBtn, tabClone));
     if (tabVoiceChangerBtn && tabVoiceChanger) tabVoiceChangerBtn.addEventListener('click', () => switchTab(tabVoiceChangerBtn, tabVoiceChanger));
+    if (tabEditorBtn && tabEditor) tabEditorBtn.addEventListener('click', () => switchTab(tabEditorBtn, tabEditor));
     if (tabHistoryBtn && tabHistory) tabHistoryBtn.addEventListener('click', () => switchTab(tabHistoryBtn, tabHistory));
 
     // Settings Modal
+    const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+
     if (settingsBtn && settingsModal) {
         settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
         closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        if (resetDefaultsBtn) {
+            resetDefaultsBtn.addEventListener('click', () => {
+                if (customApiKeyInput) customApiKeyInput.value = '';
+                if (customAzureKeyInput) customAzureKeyInput.value = '';
+                if (customAzureRegionInput) customAzureRegionInput.value = 'eastus';
+
+                localStorage.removeItem('voxsync_api_key');
+                localStorage.removeItem('voxsync_azure_key');
+                localStorage.removeItem('voxsync_azure_region');
+
+                // Reset Language to Khmer in TTS
+                const ttsLang = document.getElementById('ttsLangSelect');
+                const ttsSpeed = document.getElementById('ttsSpeedRange');
+                const ttsSpeedVal = document.getElementById('ttsSpeedVal');
+                if (ttsLang) {
+                    ttsLang.value = 'km';
+                    ttsLang.dispatchEvent(new Event('change'));
+                }
+                if (ttsSpeed) {
+                    ttsSpeed.value = '1.0';
+                    if (ttsSpeedVal) ttsSpeedVal.textContent = '1.0x';
+                    ttsSpeed.dispatchEvent(new Event('input'));
+                }
+
+                // Reset Voice Editor Defaults
+                const editorTone = document.getElementById('editorStudioTone');
+                const editorDenoise = document.getElementById('editorDenoise');
+                const editorLimiter = document.getElementById('editorLimiterEnabled');
+                const editorLimiterCeiling = document.getElementById('editorLimiterCeiling');
+                const editorVoiceLeveler = document.getElementById('editorVoiceLeveler');
+
+                if (editorTone) editorTone.value = 'audition_vocal';
+                if (editorDenoise) editorDenoise.value = 'audition_clean';
+                if (editorLimiter) editorLimiter.checked = true;
+                if (editorLimiterCeiling) editorLimiterCeiling.value = '-1.0';
+                if (editorVoiceLeveler) editorVoiceLeveler.checked = true;
+
+                if (typeof showToast === 'function') {
+                    showToast('បានកំណត់ការកំណត់ទាំងអស់ទៅលំនាំដើមរួចរាល់ហើយ! (Reset to Defaults)', 'success');
+                }
+                settingsModal.classList.add('hidden');
+            });
+        }
+
         saveSettingsBtn.addEventListener('click', () => {
             const geminiKey = customApiKeyInput ? customApiKeyInput.value.trim() : '';
             const azureKey = customAzureKeyInput ? customAzureKeyInput.value.trim() : '';
@@ -118,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('voxsync_azure_region', azureRegion);
 
             if (typeof showToast === 'function') {
-                showToast('Settings saved successfully', 'success');
+                showToast('បានរក្សាទុកការកំណត់ដោយជោគជ័យ (Settings Saved)', 'success');
             }
             settingsModal.classList.add('hidden');
         });

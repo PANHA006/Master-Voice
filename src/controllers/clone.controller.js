@@ -1,4 +1,5 @@
 const CloneService = require('../services/clone.service');
+const { convertToMp3 } = require('../utils/audio.util');
 
 class CloneController {
     /**
@@ -15,9 +16,10 @@ class CloneController {
             }
 
             const { voiceName, lang } = req.body;
+            const converted = await convertToMp3(req.file.path);
 
             const result = await CloneService.processVoiceSample({
-                referenceAudioPath: req.file.path,
+                referenceAudioPath: converted.filePath,
                 voiceName: voiceName || 'My Cloned Voice',
                 lang: lang || 'km'
             });

@@ -10,7 +10,9 @@
     "test:cleanup": "node test/test-cleanup.js",
     "test:speed": "node test/test-speed.js",
     "test:history": "node test/test-history.js",
-    "test:clone": "node test/test-local-clone.js"
+    "test:clone": "node test/test-local-clone.js",
+    "test:mastering": "node test/test-editor-mastering.js",
+    "test:persistence": "node test/test-voice-persistence.js"
   },
   "keywords": [
     "tts",

@@ -208,20 +208,39 @@ class CloneService {
     /**
      * Synthesize speech using Acoustic Frequency Matching & Neural Voice Morphing
      */
-    static async cloneAndSynthesize({ referenceAudioPath, text, voiceName = 'My Cloned Voice', lang = 'km', existingVoiceId, saveToRegistry = false }) {
+    static async cloneAndSynthesize({ referenceAudioPath, savedAcoustic, text, voiceName = 'My Cloned Voice', lang = 'km', existingVoiceId, saveToRegistry = false, rate = 1.0 }) {
         const cleanLines = splitScriptLines(text);
         if (cleanLines.length === 0) {
             throw new Error('Script text is empty or invalid.');
         }
 
-        if (!referenceAudioPath || !fs.existsSync(referenceAudioPath)) {
-            throw new Error('Reference voice audio sample is required for acoustic cloning.');
+        const voiceId = existingVoiceId || `cloned-${Date.now()}`;
+        const speedRate = Math.max(0.5, Math.min(3.0, Number(rate) || 1.0));
+
+        // 1. Resolve acoustic properties
+        let acousticData = savedAcoustic;
+
+        // Try existing registered voice in VoiceManager
+        if (!acousticData && existingVoiceId) {
+            const registered = VoiceManager.getClonedVoices().find(v => v.id === existingVoiceId);
+            if (registered && registered.acoustic) {
+                acousticData = registered.acoustic;
+            }
         }
 
-        const voiceId = existingVoiceId || `cloned-${Date.now()}`;
+        // If not found and reference sample file exists, analyze it
+        if (!acousticData && referenceAudioPath && fs.existsSync(referenceAudioPath)) {
+            acousticData = await AcousticAnalyzer.analyzeVoice(referenceAudioPath, lang);
+        }
 
-        // 1. Analyze user sample acoustic properties
-        const acousticData = await AcousticAnalyzer.analyzeVoice(referenceAudioPath, lang);
+        // If still not found, provide standard acoustic profile fallback
+        if (!acousticData) {
+            acousticData = {
+                baseNeuralVoice: lang === 'km' ? 'km-KH-PisethNeural' : 'en-US-JennyNeural',
+                pitchOffsetStr: '+18Hz',
+                dspFiltergraph: 'equalizer=f=200:width_type=h:width=100:g=1.5,equalizer=f=2500:width_type=h:width=500:g=1.5,compand=0.3|0.8:6:-70/-60|-20/-10|0/0:6:0:-90:0.2'
+            };
+        }
 
         // Save to VoiceManager if explicitly requested
         if (saveToRegistry && !existingVoiceId) {
@@ -229,7 +248,7 @@ class CloneService {
                 id: voiceId,
                 name: voiceName,
                 lang,
-                referenceAudioPath,
+                referenceAudioPath: referenceAudioPath || 'storage/uploads/sample-check.mp3',
                 acoustic: acousticData,
                 createdAt: new Date().toISOString()
             });
@@ -246,15 +265,20 @@ class CloneService {
         const fullScript = cleanLines.join('\n');
         let finalAudioBuffer = null;
 
+        // Calculate rate offset matching speedRate (e.g. 1.15x -> +15% - 14% = +1%)
+        const rateOffset = lang === 'km' ? -14 : -4;
+        const ratePercent = Math.round((speedRate - 1.0) * 100) + rateOffset;
+        const rateStr = (ratePercent >= 0 ? `+${ratePercent}%` : `${ratePercent}%`);
+
         // 2. Synthesize using matched Neural Voice base with pitch offset
         try {
-            console.log(`[*] Synthesizing voice "${voiceName}" using ${acousticData.baseNeuralVoice} (Offset: ${acousticData.pitchOffsetStr})...`);
+            console.log(`[*] Synthesizing voice "${voiceName}" using ${acousticData.baseNeuralVoice} (Offset: ${acousticData.pitchOffsetStr}, Rate: ${rateStr})...`);
             
             await runEdgeTTS({
                 text: fullScript,
                 voice: acousticData.baseNeuralVoice,
                 pitchStr: acousticData.pitchOffsetStr,
-                rateStr: lang === 'km' ? '-14%' : '-4%',
+                rateStr,
                 outputPath: rawOutputPath,
                 vttPath
             });

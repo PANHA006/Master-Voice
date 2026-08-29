@@ -1,0 +1,97 @@
+[
+  {
+    "id": "custom-1787646632200-8452",
+    "name": "PICH",
+    "gender": "Custom",
+    "lang": "km",
+    "category": "Custom",
+    "isCustom": true,
+    "createdAt": "2026-08-25T08:30:32.201Z",
+    "config": {
+      "baseVoice": "km-KH-PisethNeural",
+      "pitch": 22,
+      "formant": 0.8,
+      "bass": 3,
+      "mid": 6,
+      "treble": 9,
+      "compression": "radio",
+      "reverb": "booth"
+    }
+  },
+  {
+    "id": "custom-1787646477696-1220",
+    "name": "LIKA",
+    "gender": "Custom",
+    "lang": "km",
+    "category": "Custom",
+    "isCustom": true,
+    "createdAt": "2026-08-25T08:27:57.696Z",
+    "config": {
+      "baseVoice": "km-KH-SreymomNeural",
+      "pitch": 40,
+      "formant": 0.8,
+      "bass": 1,
+      "mid": 5,
+      "treble": 7,
+      "compression": "radio",
+      "reverb": "booth"
+    }
+  },
+  {
+    "id": "custom-1787646217612-2750",
+    "name": "Custom Lika",
+    "gender": "Custom",
+    "lang": "km",
+    "category": "Custom",
+    "isCustom": true,
+    "createdAt": "2026-08-25T08:23:37.612Z",
+    "config": {
+      "baseVoice": "km-KH-SreymomNeural",
+      "pitch": 36,
+      "formant": 0.8,
+      "bass": 1,
+      "mid": 5,
+      "treble": 7,
+      "compression": "radio",
+      "reverb": "booth"
+    }
+  },
+  {
+    "id": "custom-1787645811135-4009",
+    "name": "My Cinema Pro Deep",
+    "gender": "Custom",
+    "lang": "km",
+    "category": "Custom",
+    "isCustom": true,
+    "createdAt": "2026-08-25T08:16:51.135Z",
+    "config": {
+      "baseVoice": "km-KH-PisethNeural",
+      "pitch": -20,
+      "formant": 0.75,
+      "bass": 8,
+      "mid": -2,
+      "treble": 3,
+      "compression": "medium",
+      "reverb": "booth"
+    }
+  },
+  {
+    "id": "custom-1787645800302-9461",
+    "name": "My Cinema Pro Deep",
+    "gender": "Custom",
+    "lang": "km",
+    "category": "Custom",
+    "isCustom": true,
+    "createdAt": "2026-08-25T08:16:40.302Z",
+    "config": {
+      "baseVoice": "km-KH-PisethNeural",
+      "pitch": -20,
+      "formant": 0.75,
+      "bass": 8,
+      "mid": -2,
+      "treble": 3,
+      "compression": "medium",
+      "reverb": "booth"
+    }
+  }
+]

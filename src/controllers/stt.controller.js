@@ -1,5 +1,5 @@
 const STTService = require('../services/stt.service');
-const { safeDeleteFile } = require('../utils/audio.util');
+const { safeDeleteFile, convertToMp3 } = require('../utils/audio.util');
 
 class STTController {
     /**
@@ -16,8 +16,10 @@ class STTController {
                 });
             }
 
-            uploadedFilePath = req.file.path;
-            const mimeType = req.file.mimetype;
+            // Convert to clean MP3
+            const converted = await convertToMp3(req.file.path);
+            uploadedFilePath = converted.filePath;
+            const mimeType = 'audio/mp3';
             const customApiKey = req.body.customApiKey || req.headers['x-gemini-api-key'];
 
             const result = await STTService.transcribe({

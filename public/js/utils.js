@@ -208,11 +208,19 @@ const formatKhmerPunctuationBreak = formatPunctuationAutoBreak;
  * @param {HTMLTextAreaElement} textarea
  * @param {Function} onUpdateCallback
  */
-function setupAutoBreak(textarea, onUpdateCallback) {
+function setupAutoBreak(textarea, onUpdateCallback, getEnabledCallback) {
     if (!textarea) return;
+
+    const isEnabled = () => {
+        if (typeof getEnabledCallback === 'function') {
+            return Boolean(getEnabledCallback());
+        }
+        return true;
+    };
 
     // 1. Intercept Paste
     textarea.addEventListener('paste', (e) => {
+        if (!isEnabled()) return; // Skip auto break when toggle is OFF
         const pasteText = (e.clipboardData || window.clipboardData)?.getData('text');
         if (pasteText && (pasteText.includes('។') || pasteText.includes('៕') || pasteText.includes('.') || pasteText.includes('!') || pasteText.includes('?'))) {
             e.preventDefault();
@@ -242,6 +250,7 @@ function setupAutoBreak(textarea, onUpdateCallback) {
 
     // 2. Intercept Direct Typing
     textarea.addEventListener('input', (e) => {
+        if (!isEnabled()) return; // Skip auto break when toggle is OFF
         if (e.isComposing) return;
 
         // Auto-break on typing Khmer '។' or '៕'
@@ -274,6 +283,7 @@ function setupAutoBreak(textarea, onUpdateCallback) {
 
     // 3. Handle IME composition completion (Khmer keyboards)
     textarea.addEventListener('compositionend', (e) => {
+        if (!isEnabled()) return; // Skip auto break when toggle is OFF
         if (e.data && (e.data.endsWith('។') || e.data.endsWith('៕'))) {
             const start = textarea.selectionStart;
             const textVal = textarea.value;
@@ -306,13 +316,24 @@ const setupKhmerAutoBreak = setupAutoBreak;
 
 /* Favorite Voices Management */
 const FAVORITES_STORAGE_KEY = 'voxsync_favorite_voices';
+const DEFAULT_FAVORITE_VOICES = [
+    'cloned-1787562721953',
+    'cloned-1787566066619',
+    'custom-1787646217612-2750',
+    'custom-1787646477696-1220',
+    'custom-1787646632200-8452'
+];
 
 function getFavoriteVoiceIds() {
     try {
         const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+        }
+        return [...DEFAULT_FAVORITE_VOICES];
     } catch (e) {
-        return [];
+        return [...DEFAULT_FAVORITE_VOICES];
     }
 }
 
@@ -337,12 +358,27 @@ function toggleFavoriteVoice(voiceId) {
     }
     localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent('voxsync:favoritesChanged', { detail: { voiceId, isFav, list } }));
+
+    // Sync to backend preferences file
+    syncVoicePreferencesToServer();
     return isFav;
 }
 
 /* Active TTS Voices Management (Voices explicitly enabled by user in TTS dropdown) */
 const ACTIVE_TTS_STORAGE_KEY = 'voxsync_active_tts_voices';
-const DEFAULT_CORE_VOICES = ['km-KH-PisethNeural', 'km-KH-SreymomNeural', 'en-US-JennyNeural', 'en-US-GuyNeural'];
+const DEFAULT_CORE_VOICES = [
+    'cloned-1787562721953',
+    'cloned-1787566066619',
+    'cloned-1787973055454',
+    'custom-1787646217612-2750',
+    'custom-1787646477696-1220',
+    'custom-1787646632200-8452',
+    'custom-1787645811135-4009',
+    'km-KH-PisethNeural',
+    'km-KH-SreymomNeural',
+    'en-US-JennyNeural',
+    'en-US-GuyNeural'
+];
 
 function getActiveTTSVoiceIds() {
     try {
@@ -355,6 +391,18 @@ function getActiveTTSVoiceIds() {
     } catch (e) {
         return [...DEFAULT_CORE_VOICES];
     }
+}
+
+async function syncVoicePreferencesToServer() {
+    try {
+        const favorites = getFavoriteVoiceIds();
+        const activeVoices = getActiveTTSVoiceIds();
+        await fetch('/api/tts/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ favorites, activeVoices })
+        });
+    } catch (e) {}
 }
 
 function isVoiceActiveInTTS(voiceId) {
